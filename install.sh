@@ -4,7 +4,7 @@ mkdir -p ${here}/.local/app
 mkdir -p ${here}/.local/bin
 
 rm -rf ${here}/.local/app/ghr-installer
-git clone git@github.com:zloeber/ghr-installer.git ${here}/.local/app/ghr-installer
+git clone https://github.com/zloeber/ghr-installer.git ${here}/.local/app/ghr-installer
 
 dotfiles=(
 	".zshrc"
