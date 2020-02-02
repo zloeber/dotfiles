@@ -1,9 +1,9 @@
 Host ssh.dev.azure.com
   Hostname ssh.dev.azure.com
   User git
-  IdentityFile ~/dotfiles/.ssh/cicd_id_rsa
+  IdentityFile ~/.ssh/cicd_id_rsa
 
 Host vs-ssh.visualstudio.com
   Hostname vs-ssh.visualstudio.com
   User git
-  IdentityFile ~/dotfiles/.ssh/cicd_id_rsa
+  IdentityFile ~/.ssh/cicd_id_rsa

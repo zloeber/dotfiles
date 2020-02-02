@@ -10,16 +10,24 @@ git clone https://github.com/zloeber/ghr-installer.git ${here}/.local/app/ghr-in
 dotfiles=(
 	".zshrc"
 	".gitconfig"
+	".tmux.conf.local"
+	".zshrc.local"
+	".p10k.zsh")
+
+dotpaths=(
 	".ssh"
 	".local/bin"
 	".local/app"
 	".oh-my-zsh"
 	".tmux"
-	".tmux.conf.local"
-	".zshrc.local"
-	".p10k.zsh")
+)
 
 for dotfile in "${dotfiles[@]}";do
- echo "Linking: ${here}/${dotfile}"
+ echo "Linking file: ${here}/${dotfile}"
  ln -sf "${here}/${dotfile}" "${HOME}/${dotfile}"
+done
+
+for dotpath in "${dotpaths[@]}";do
+ echo "Linking path: ${here}/${dotpath}"
+ ln -sf "${here}/${dotpath}" "${HOME}/"
 done

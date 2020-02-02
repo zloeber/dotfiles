@@ -1,5 +1,5 @@
 #!/bin/bash
-CERTPATH=${CERTPATH:-"~/dotfiles/.ssh/cicd_id_rsa"}
+CERTPATH=${CERTPATH:-"${HOME}/.ssh/cicd_id_rsa"}
 SECRETNAME=${SECRETNAME:-"cicd-private-key"}
 VAULTNAME=${VAULTNAME}
 AZ_TENANT_ID=${AZ_TENANT_ID:-`az account get-access-token --query tenant --output tsv`}
