@@ -1,2 +1,3 @@
 eval "$(direnv hook zsh)"
+alias githubapp="make -C ${HOME}/.local/app/ghr-installer"
 
