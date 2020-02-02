@@ -1,4 +1,4 @@
-path=($HOME/.local/bin $path)
+path=($HOME/Sync/.local/bin $HOME/dotfiles/.local/bin $path)
 export PATH
 eval "$(direnv hook zsh)"
 alias githubapp="make -C ${HOME}/.local/app/ghr-installer"
