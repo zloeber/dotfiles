@@ -15,7 +15,6 @@ dotfiles=(
 	".oh-my-zsh"
 	".tmux"
 	".tmux.conf.local"
-	".zgen"
 	".zshrc.local"
 	".p10k.zsh")
 
