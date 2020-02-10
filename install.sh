@@ -38,6 +38,6 @@ done
 
 for localdotpath in "${localdotpaths[@]}";do
  echo "Linking .local path: ${here}/${dotpath}"
- ln -sf "${here}/${dotpath}" "${HOME}/.local"
+ ln -sf "${here}/${localdotpath}" "${HOME}/.local"
 done
 
