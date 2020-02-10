@@ -37,7 +37,7 @@ for dotpath in "${dotpaths[@]}";do
 done
 
 for localdotpath in "${localdotpaths[@]}";do
- echo "Linking .local path: ${here}/${dotpath}"
+ echo "Linking .local path: ${here}/${localdotpath}"
  ln -sf "${here}/${localdotpath}" "${HOME}/.local"
 done
 
