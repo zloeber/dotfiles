@@ -17,10 +17,13 @@ dotfiles=(
 
 dotpaths=(
 	".ssh"
-	".local/bin"
-	".local/app"
 	".oh-my-zsh"
 	".tmux"
+)
+
+localdotpaths=(
+        ".local/bin"
+        ".local/app"
 )
 
 for dotfile in "${dotfiles[@]}";do
@@ -32,3 +35,9 @@ for dotpath in "${dotpaths[@]}";do
  echo "Linking path: ${here}/${dotpath}"
  ln -sf "${here}/${dotpath}" "${HOME}/"
 done
+
+for localdotpath in "${localdotpaths[@]}";do
+ echo "Linking .local path: ${here}/${dotpath}"
+ ln -sf "${here}/${dotpath}" "${HOME}/.local"
+done
+
