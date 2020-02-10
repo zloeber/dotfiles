@@ -1,7 +1,4 @@
 [diff "sopsdiffer"]
 	textconv = sops -d
-[user]
-	email = zach.loeber@havi.com
-	name = Zach Loeber
 [alias]
   pu = !"git fetch origin -v; git fetch upstream -v; git merge upstream/master"

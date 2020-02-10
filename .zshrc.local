@@ -1,5 +1,26 @@
-path=($HOME/Sync/.local/bin $HOME/dotfiles/.local/bin $path)
-export PATH
-eval "$(direnv hook zsh)"
+if [ -d $HOME/Sync/.local/bin ]; then
+#  echo "Adding ~/Sync/.local/bin to path"
+  export PATH="${HOME}/Sync/.local/bin:${PATH}"
+fi
+if [ -d $HOME/dotfiles/.local/bin ]; then
+#  echo "Adding ~/dotfiles/.local/bin to path"
+  export PATH="${HOME}/dotfiles/.local/bin:${PATH}"
+fi
+if [ -d $HOME/.local/bin ]; then
+#  echo "Adding ~/.local/bin to path"
+  export PATH="${HOME}/.local/bin:${PATH}"
+fi
+
+if which ls &>/dev/null; then
+  source <(jx completion zsh)
+fi
+if which direnv &>/dev/null; then
+  eval "$(direnv hook zsh)"
+fi
+
+if which minikube &>/dev/null; then
+  source <(minikube completion zsh)
+fi
+export GOROOT=/usr/local/go
 alias githubapp="make -C ${HOME}/.local/app/ghr-installer"
 
