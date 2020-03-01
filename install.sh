@@ -1,10 +1,14 @@
 #!/bin/bash
+
+## Script to setup this dotfile deployment. Tested as working on Linux and Azure Shell
+
 here=`pwd`
 mkdir -p ${here}/.local/app
 mkdir -p ${here}/.local/bin
 mkdir -p ${here}/.ssh
-mkdir -p ${HOME}/.local
 
+
+## My own personal project for quickly installing github based releases
 rm -rf ${here}/.local/app/ghr-installer
 git clone https://github.com/zloeber/ghr-installer.git ${here}/.local/app/ghr-installer
 
@@ -41,3 +45,8 @@ for localdotpath in "${localdotpaths[@]}";do
  ln -sf "${here}/${localdotpath}" "${HOME}/.local"
 done
 
+rm -rf $HOME/.asdf
+git clone https://github.com/asdf-vm/asdf.git $HOME/.asdf
+cd $HOME/.asdf && git checkout "$(git describe --abbrev=0 --tags)"
+
+make -C ${here}/.local/app/ghr-installer install direnv

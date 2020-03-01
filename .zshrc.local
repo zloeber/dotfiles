@@ -1,19 +1,19 @@
-if [ -d $HOME/Sync/.local/bin ]; then
-#  echo "Adding ~/Sync/.local/bin to path"
+if [ -d $HOME/.local/bin ]; then
+  export PATH="${HOME}/.local/bin:${PATH}"
+elif [ -d $HOME/Sync/.local/bin ]; then
   export PATH="${HOME}/Sync/.local/bin:${PATH}"
-fi
-if [ -d $HOME/dotfiles/.local/bin ]; then
-#  echo "Adding ~/dotfiles/.local/bin to path"
+elif [ -d $HOME/dotfiles/.local/bin ]; then
   export PATH="${HOME}/dotfiles/.local/bin:${PATH}"
 fi
-if [ -d $HOME/.local/bin ]; then
-#  echo "Adding ~/.local/bin to path"
-  export PATH="${HOME}/.local/bin:${PATH}"
+
+if [ -d $HOME/.krew/bin ]; then
+  export PATH="${HOME}/.krew/bin:${PATH}"
 fi
 
-if which ls &>/dev/null; then
+if which jx &>/dev/null; then
   source <(jx completion zsh)
 fi
+
 if which direnv &>/dev/null; then
   eval "$(direnv hook zsh)"
 fi
@@ -21,6 +21,12 @@ fi
 if which minikube &>/dev/null; then
   source <(minikube completion zsh)
 fi
-export GOROOT=/usr/local/go
-alias githubapp="make -C ${HOME}/.local/app/ghr-installer"
 
+if ls $HOME/.asdf/asdf.sh &>/dev/null; then
+  . $HOME/.asdf/asdf.sh
+  . $HOME/.asdf/completions/asdf.bash
+fi
+
+export GOROOT=/usr/local/go
+
+alias githubapp="make -C ${HOME}/.local/app/ghr-installer"
