@@ -28,6 +28,7 @@ if ! zgen saved; then
     zgen oh-my-zsh plugins/kubectl
     zgen oh-my-zsh plugins/colored-man-pages
     zgen oh-my-zsh plugins/history
+    zgen oh-my-zsh plugins/ssh-agent
 
     zgen load zsh-users/zsh-history-substring-search
     zgen load zsh-users/zsh-syntax-highlighting

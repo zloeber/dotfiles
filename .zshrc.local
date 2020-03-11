@@ -10,6 +10,10 @@ if [ -d $HOME/.krew/bin ]; then
   export PATH="${HOME}/.krew/bin:${PATH}"
 fi
 
+if [ -d $HOME/.npm/bin ]; then
+  export PATH="${HOME}/.npm/bin:${PATH}"
+fi
+
 if which jx &>/dev/null; then
   source <(jx completion zsh)
 fi
