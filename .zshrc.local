@@ -33,4 +33,4 @@ fi
 
 export GOROOT=/usr/local/go
 
-alias githubapp="make -C ${HOME}/.local/app/ghr-installer"
+alias githubapp="make --no-print-directory -C ${HOME}/.local/app/ghr-installer"
