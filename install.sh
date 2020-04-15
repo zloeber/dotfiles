@@ -57,17 +57,23 @@ cd $HOME/.asdf && git checkout "$(git describe --abbrev=0 --tags)"
 asdf=$HOME/.asdf/bin/asdf
 export PATH="$HOME/.asdf/bin:$PATH"
 
+# Install the asdf plugin for each tool listed in .tool-versions (which is now linked to your home directory)
 for plugin in $(cut -d ' ' -f 1 ${here}/.tool-versions); do
   if ! $asdf plugin-list | grep $plugin > /dev/null; then
     $asdf plugin add $plugin
   fi
 done
 
+# Work around for nodejs installation issues in asdf
 bash $HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring
 
+# Install all versions of tools listed in .tool-versions
 $asdf install
 
 echo "Install of dotfiles complete!"
 echo ""
-echo "Now optionally run: sudo ./sudo_install.sh"
-echo "Then change your shell to zsh with: chsh -s zsh ${whoami}"
+echo "If not already done, run: sudo ./sudo_install.sh"
+echo ""
+echo "Now change your shell to zsh with: chsh -s /usr/bin/zsh ${whoami}"
+echo ""
+echo "Finally, logout of your shell and back in again."
