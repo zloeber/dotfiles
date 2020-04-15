@@ -9,4 +9,5 @@
 (?d).DS_Store
 (?d)**/.terraform/
 (?d).local/share/Trash
+(?d).local/share/
 

@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# a script to download a private cert via keyvault.
+
 CERTPATH=${CERTPATH:-"${HOME}/.ssh/cicd_id_rsa"}
 SECRETNAME=${SECRETNAME:-"cicd-private-key"}
 VAULTNAME=${VAULTNAME}

@@ -1,36 +1,80 @@
-if [ -d $HOME/.local/bin ]; then
-  export PATH="${HOME}/.local/bin:${PATH}"
-elif [ -d $HOME/Sync/.local/bin ]; then
-  export PATH="${HOME}/Sync/.local/bin:${PATH}"
-elif [ -d $HOME/dotfiles/.local/bin ]; then
-  export PATH="${HOME}/dotfiles/.local/bin:${PATH}"
+## .zshrc.local
+# zsh environment overrides. 
+# I use this to modify default paths and insert autocompletion rules for various cli tools
+# Before dropping things in here you should look for oh-my-zsh plugins that would do the same.
+# zgen is setup to look at this file and .zshrc for updates and regenerate when changes occur.
+BIN_PATH=$HOME/.local/bin
+
+mkdir -p $BIN_PATH
+export PATH="$HOME/.local/bin:${PATH}"
+
+if [ -d $HOME/dotfiles/.local/bin ]; then
+  export PATH="$HOME/dotfiles/.local/bin:${PATH}"
 fi
 
-if [ -d $HOME/.krew/bin ]; then
-  export PATH="${HOME}/.krew/bin:${PATH}"
+mkdir -p $HOME/.krew/bin
+export PATH="$HOME/.krew/bin:${PATH}"
+
+## 
+mkdir -p $HOME/.npm/bin
+export PATH="$HOME/.npm/bin:${PATH}"
+
+## Setup asdf-vm (https://asdf-vm.com)
+if [[ ! -a $HOME/.asdf/asdf.sh ]]; then
+  git clone https://github.com/asdf-vm/asdf.git ~/.asdf
+  cd ~/.asdf &&  git checkout "$(git describe --abbrev=0 --tags)"
 fi
 
-if [ -d $HOME/.npm/bin ]; then
-  export PATH="${HOME}/.npm/bin:${PATH}"
-fi
+## Done via oh-my-zsh plugins/asdf
+#if ls ${HOME}/.asdf/asdf.sh &>/dev/null; then
+#  . $HOME/.asdf/asdf.sh
+#  . $HOME/.asdf/completions/asdf.bash
+#fi
 
-if which jx &>/dev/null; then
-  source <(jx completion zsh)
-fi
+#if which jx &>/dev/null; then
+#  source <(jx completion zsh)
+#fi
 
-if which direnv &>/dev/null; then
-  eval "$(direnv hook zsh)"
-fi
+## Done via oh-my-zsh plugins/direnv
+#if which direnv &>/dev/null; then
+#  eval "$(direnv hook zsh)"
+#fi
 
 if which minikube &>/dev/null; then
   source <(minikube completion zsh)
 fi
 
-if ls $HOME/.asdf/asdf.sh &>/dev/null; then
-  . $HOME/.asdf/asdf.sh
-  . $HOME/.asdf/completions/asdf.bash
+if which kind &>/dev/null; then
+  source <(kind completion zsh)
 fi
 
-export GOROOT=/usr/local/go
+# Broot directory lister (https://dystroy.org/broot)
+if [[ ! -a ${BIN_PATH}/broot ]]; then
+    curl --retry 3 --retry-delay 5 --fail -sSL -o ${BIN_PATH}/broot https://dystroy.org/broot/download/x86_64-linux/broot
+    chmod +x ${BIN_PATH}/broot
+fi
 
-alias githubapp="make --no-print-directory -C ${HOME}/.local/app/ghr-installer"
+function br {
+    f=$(mktemp)
+    (
+        set +e
+        broot --outcmd "$f" "$@"
+        code=$?
+        if [ "$code" != 0 ]; then
+            rm -f "$f"
+            exit "$code"
+        fi
+    )
+    code=$?
+    if [ "$code" != 0 ]; then
+        return "$code"
+    fi
+    d=$(<"$f")
+    rm -f "$f"
+    eval "$d"
+}
+
+## Alias to githubapp for installing/updating applications from github, nifty.
+if [[ -d ${HOME}/.local/app/ghr-installer ]]; then
+    alias githubapp="make --no-print-directory -C ${HOME}/.local/app/ghr-installer"
+fi

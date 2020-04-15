@@ -23,6 +23,8 @@ if ! zgen saved; then
     zgen oh-my-zsh plugins/sudo
     zgen oh-my-zsh plugins/docker
     zgen oh-my-zsh plugins/terraform
+    zgen oh-my-zsh plugins/asdf
+    zgen oh-my-zsh plugins/direnv
     zgen oh-my-zsh plugins/command-not-found
     zgen oh-my-zsh plugins/helm
     zgen oh-my-zsh plugins/kubectl
@@ -57,4 +59,3 @@ fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f "${HOME}/.p10k.zsh" ]] || source "${HOME}/.p10k.zsh"
-
