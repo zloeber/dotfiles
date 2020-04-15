@@ -55,6 +55,8 @@ rm -rf $HOME/.asdf
 git clone https://github.com/asdf-vm/asdf.git $HOME/.asdf
 cd $HOME/.asdf && git checkout "$(git describe --abbrev=0 --tags)"
 asdf=$HOME/.asdf/bin/asdf
+export PATH="$HOME/.asdf/bin:$PATH"
+
 for plugin in $(cut -d ' ' -f 1 ${here}/.tool-versions); do
   if ! $asdf plugin-list | grep $plugin > /dev/null; then
     $asdf plugin add $plugin
