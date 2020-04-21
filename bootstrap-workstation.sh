@@ -1,16 +1,15 @@
 #!/bin/bash
-
 ## Script to setup this dotfile deployment. Tested as working on Linux and Azure Shell
-
 here=`pwd`
 
-mkdir -p ${HOME}/.local/app
-mkdir -p ${HOME}/.local/bin
-mkdir -p ${HOME}/.ssh
+sudo apt install -y \
+  make automake autoconf libreadline-dev \
+  libncurses-dev libssl-dev libyaml-dev \
+  libxslt-dev libffi-dev libtool unixodbc-dev \
+  unzip curl tmux zsh docker.io
 
-## My own personal project for quickly installing github based releases
-rm -rf ${HOME}/.local/app/ghr-installer
-git clone https://github.com/zloeber/ghr-installer.git ${HOME}/.local/app/ghr-installer
+## install githubapp, direnv, asdf, and xpanes
+make deps
 
 dotfiles=(
 	".zshrc"
@@ -18,7 +17,9 @@ dotfiles=(
 	".tmux.conf.local"
 	".zshrc.local"
 	".p10k.zsh"
-	".tool-versions")
+	".tool-versions"
+	".bash_aliases"
+)
 
 dotpaths=(
 	".oh-my-zsh"
@@ -44,16 +45,9 @@ for localdotpath in "${localdotpaths[@]}";do
  ln -sf "${here}/${localdotpath}" "${HOME}/.local"
 done
 
-## install direnv via my own github app installer
-make -C ${here}/.local/app/ghr-installer install direnv
-
 ## Setup ASDF for app version management
 #  Also install the latest version of the binaries for each plugin
 #  Using a .tool-versions file in any directory you can use `asdf install` to install those specific versions as well
-
-rm -rf $HOME/.asdf
-git clone https://github.com/asdf-vm/asdf.git $HOME/.asdf
-cd $HOME/.asdf && git checkout "$(git describe --abbrev=0 --tags)"
 asdf=$HOME/.asdf/bin/asdf
 export PATH="$HOME/.asdf/bin:$PATH"
 
@@ -70,10 +64,12 @@ bash $HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring
 # Install all versions of tools listed in .tool-versions
 $asdf install
 
+# Install xpanes for tmux
+wget https://raw.githubusercontent.com/greymd/tmux-xpanes/v4.1.1/bin/xpanes -O ${HOME}/.local/bin/xpanes
+chmod +x ${HOME}/.local/bin/xpanes
+
 echo "Install of dotfiles complete!"
-echo ""
-echo "If not already done, run: sudo ./sudo_install.sh"
 echo ""
 echo "Now change your shell to zsh with: chsh -s /usr/bin/zsh ${whoami}"
 echo ""
-echo "Finally, logout of your shell and back in again."
+echo "Finally, logout of your shell and back in again to complete the process."

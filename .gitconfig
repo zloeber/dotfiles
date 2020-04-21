@@ -2,8 +2,8 @@
 	textconv = sops -d
 [alias]
   pu = !"git fetch origin -v; git fetch upstream -v; git merge upstream/master"
-[user]
-	name = Zach Loeber
-	email = zloeber@gmail.com
+# [user]
+# 	name = Zach Loeber
+# 	email = zloeber@gmail.com
 #[url "git@github.com"]
 #	insteadOf = https://github.com
