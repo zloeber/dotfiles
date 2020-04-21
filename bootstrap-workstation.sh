@@ -19,6 +19,7 @@ dotfiles=(
 	".p10k.zsh"
 	".tool-versions"
 	".bash_aliases"
+	".profile"
 )
 
 dotpaths=(
@@ -31,8 +32,13 @@ localdotpaths=(
 )
 
 for dotfile in "${dotfiles[@]}";do
- echo "Linking file: ${here}/${dotfile}"
- ln -sf "${here}/${dotfile}" "${HOME}/${dotfile}"
+  if [ -f "${HOME}/${dotfile}" ] ; then
+	echo "${HOME}/${dotfile} -> Already exists, removing first (press any key to continue, Ctrl+C to abort!)"
+	read
+	rm "${HOME}/${dotfile}"
+  fi
+  echo "Soft linking file: ${here}/${dotfile}"
+  ln -sf ${here}/${dotfile} "${HOME}/${dotfile}"
 done
 
 for dotpath in "${dotpaths[@]}";do

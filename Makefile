@@ -26,7 +26,7 @@ help: ## Help
 	@echo 'Commands:'
 	@grep -E '^[a-zA-Z1-9_%/-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-deps: .dep/githubapp .dep/direnv .dep/asdf .dep/xpanes ## Dependencies
+deps: .dep/githubapp .dep/direnv .dep/asdf .dep/xpanes .dep/broot ## Dependencies
 
 .dep/githubapp: ## Install githubapp
 ifeq (,$(wildcard $(APP_PATH)/ghr-installer/Makefile))
@@ -36,7 +36,9 @@ ifeq (,$(wildcard $(APP_PATH)/ghr-installer/Makefile))
 endif
 
 .dep/direnv: .dep/githubapp ## Install direnv
+ifeq (,$(wildcard $(BIN_PATH)/direnv))
 	@$(MAKE) -C $(APP_PATH)/ghr-installer install direnv
+endif
 
 .dep/xpanes: ## Install xpanes
 ifeq (,$(wildcard $(BIN_PATH)/xpanes))
@@ -49,6 +51,12 @@ ifeq (,$(wildcard ${HOME}/.asdf/bin/asdf))
 	rm -rf ${HOME}/.asdf
 	git clone https://github.com/asdf-vm/asdf.git ${HOME}/.asdf
 	cd ${HOME}/.asdf && git checkout `git describe --abbrev=0 --tags`
+endif
+
+.dep/broot: ## Install broot directory lister (https://dystroy.org/broot)
+ifeq (,$(wildcard $(BIN_PATH)/broot))
+	curl --retry 3 --retry-delay 5 --fail -sSL -o $(BIN_PATH)/broot https://dystroy.org/broot/download/x86_64-linux/broot
+	chmod +x $(BIN_PATH)/broot
 endif
 
 show: ## Show some settings

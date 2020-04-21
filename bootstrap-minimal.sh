@@ -7,17 +7,23 @@ sudo apt install -y \
   make automake autoconf libreadline-dev \
   unzip curl
 
-make deps
+make .dep/direnv
 
 here=`pwd`
 
 dotfiles=(
 	".bash_aliases"
+	".profile"
 )
 
 for dotfile in "${dotfiles[@]}";do
- echo "Linking file: ${here}/${dotfile}"
- ln -sf ${here}/${dotfile} "${HOME}/${dotfile}"
+  if [ -f "${HOME}/${dotfile}" ] ; then
+	echo "${HOME}/${dotfile} -> Already exists, removing first (press any key to continue, Ctrl+C to abort!)"
+	read
+	rm "${HOME}/${dotfile}"
+  fi
+  echo "Soft linking file: ${here}/${dotfile}"
+  ln -sf ${here}/${dotfile} "${HOME}/${dotfile}"
 done
 
 echo "Install of dotfiles complete!"

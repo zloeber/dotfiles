@@ -48,12 +48,6 @@ if which kind &>/dev/null; then
   source <(kind completion zsh)
 fi
 
-# Broot directory lister (https://dystroy.org/broot)
-if [[ ! -a ${BIN_PATH}/broot ]]; then
-    curl --retry 3 --retry-delay 5 --fail -sSL -o ${BIN_PATH}/broot https://dystroy.org/broot/download/x86_64-linux/broot
-    chmod +x ${BIN_PATH}/broot
-fi
-
 function br {
     f=$(mktemp)
     (
