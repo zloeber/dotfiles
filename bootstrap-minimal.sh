@@ -4,10 +4,9 @@
 
 ## install githubapp, direnv, asdf, and xpanes
 sudo apt install -y \
-  make automake autoconf libreadline-dev \
-  unzip curl
+  make automake autoconf libreadline-dev unzip curl tmux
 
-make .dep/direnv
+make .dep/direnv .dep/xpanes
 
 here=`pwd`
 
