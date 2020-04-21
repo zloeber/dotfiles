@@ -48,7 +48,7 @@ endif
 ifeq (,$(wildcard ${HOME}/.asdf/bin/asdf))
 	rm -rf ${HOME}/.asdf
 	git clone https://github.com/asdf-vm/asdf.git ${HOME}/.asdf
-	cd ${HOME}/.asdf && git checkout "$(shell git describe --abbrev=0 --tags)"
+	cd ${HOME}/.asdf && git checkout `git describe --abbrev=0 --tags`
 endif
 
 show: ## Show some settings
