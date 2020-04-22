@@ -1,6 +1,5 @@
 python 3.7.2 2.7.15 system
 conftest 0.9.1 latest
-direnv 2.21.2 latest
 golang 1.13.9
 helm 3.1.2 latest
 helmfile 0.102.0 latest

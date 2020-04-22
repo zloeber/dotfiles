@@ -6,6 +6,7 @@ export ZGEN_DIR="${ZDOTDIR:-$HOME}"/.zgen
 ZGEN_RESET_ON_CHANGE=(
   ${ZDOTDIR:-$HOME}/.zshrc
   ${ZDOTDIR:-$HOME}/.zshrc.local
+  ${ZDOTDIR:-$HOME}/.zprofile
 )
 #ZSH="$ZGEN_DIR/robbyrussell/oh-my-zsh-master"
 ZGEN_PLUGIN_UPDATE_DAYS=5
@@ -23,8 +24,11 @@ if ! zgen saved; then
     zgen oh-my-zsh plugins/sudo
     zgen oh-my-zsh plugins/docker
     zgen oh-my-zsh plugins/terraform
-    zgen oh-my-zsh plugins/asdf
-    zgen oh-my-zsh plugins/direnv
+    
+    ## These two like to fork up my path for whatever reason (jerks)
+    #zgen oh-my-zsh plugins/asdf
+    #zgen oh-my-zsh plugins/direnv
+    
     zgen oh-my-zsh plugins/command-not-found
     zgen oh-my-zsh plugins/helm
     zgen oh-my-zsh plugins/kubectl
@@ -59,3 +63,26 @@ fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f "${HOME}/.p10k.zsh" ]] || source "${HOME}/.p10k.zsh"
+
+## .zshrc.local
+# zsh environment overrides. 
+# I use this to modify default paths and insert autocompletion rules for various cli tools
+# Before dropping things in here you should look for oh-my-zsh plugins that would do the same.
+# zgen is setup to look at this file and .zshrc for updates and regenerate when changes occur.
+
+## Path customizations
+BIN_PATH=$HOME/.local/bin
+ASDF_BIN_PATH=$HOME/.asdf/bin
+
+if [ -f $BIN_PATH/direnv ]; then
+  eval "$($BIN_PATH/direnv hook zsh)"
+fi
+
+if ls ${ASDF_BIN_PATH}/asdf &>/dev/null; then
+  . $HOME/.asdf/asdf.sh
+  #. $HOME/.asdf/completions/asdf.bash
+  fpath=(${ASDF_BIN_PATH}/completions $fpath)
+  # initialise completions with ZSH's compinit
+  autoload -Uz compinit
+  compinit
+fi

@@ -1,5 +1,0 @@
-export GOBIN=$(dirname $(asdf which go))
-export GOROOT=$(dirname $GOBIN)
-export GOPATH=$HOME/go
-export GO111MODULE=on
-export PATH="${PATH}:${GOPATH}"

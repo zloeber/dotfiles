@@ -21,12 +21,48 @@ if [ -d "$HOME/bin" ] ; then
     PATH="$HOME/bin:$PATH"
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
+## Customizations for the PATH
+## Path customizations
+BIN_PATH=$HOME/.local/bin
+NPM_BIN_PATH=$HOME/.npm/bin
+KREW_BIN_PATH=$HOME/.krew/bin
+ASDF_BIN_PATH=$HOME/.asdf/bin
+TINYGO_BIN_PATH=/usr/local/tinygo/bin
+CARGO_BIN_PATH=$HOME/.cargo/bin
+
+if [ -d $BIN_PATH ]; then
+  PATH="$BIN_PATH:${PATH}"
 fi
 
-# set PATH so it includes user's asdf binary path if it exists
-if [ -d "$HOME/.asdf/bin" ] ; then
-    PATH="$HOME/.asdf/bin:$PATH"
+if [ -d /usr/local/tinygo/bin ]; then
+  PATH="${PATH}:/usr/local/tinygo/bin"
+fi
+
+if [ -d $KREW_BIN_PATH ]; then
+  PATH="${PATH}:$KREW_BIN_PATH"
+fi
+
+if [ -d $NPM_BIN_PATH ]; then
+  PATH="${PATH}:$NPM_BIN_PATH"
+fi
+
+if [ -d $ASDF_BIN_PATH ]; then
+  PATH="$ASDF_BIN_PATH:${PATH}"
+fi
+
+if [ -d $TINYGO_BIN_PATH ]; then
+  PATH="${PATH}:$TINYGO_BIN_PATH"
+fi
+
+if [ -d $CARGO_BIN_PATH ]; then
+  PATH="${PATH}:$CARGO_BIN_PATH"
+fi
+export GOPATH=$HOME/go
+export GO111MODULE=on
+
+export PATH="${GOPATH}:${PATH}"
+
+if [ -d $ASDF_BIN_PATH ]; then
+  export GOBIN=$(dirname $(asdf which go))
+  export GOROOT=$(dirname $GOBIN)
 fi

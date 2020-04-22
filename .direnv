@@ -1,0 +1,4 @@
+# include .profile if it exists as direnv mangles the fucking PATH var otherwise.
+if [ -f "$HOME/.profile" ]; then
+    . "$HOME/.profile"
+fi

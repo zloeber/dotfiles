@@ -20,6 +20,7 @@ dotfiles=(
 	".tool-versions"
 	".bash_aliases"
 	".profile"
+	".direnv"
 )
 
 dotpaths=(

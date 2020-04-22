@@ -7,3 +7,6 @@
 # 	email = zloeber@gmail.com
 #[url "git@github.com"]
 #	insteadOf = https://github.com
+[user]
+	email = zloeber@gmail.com
+	name = Zach Loeber
