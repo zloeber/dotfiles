@@ -1,0 +1,7 @@
+[diff "sopsdiffer"]
+	textconv = sops -d
+[alias]
+  pu = !"git fetch origin -v; git fetch upstream -v; git merge upstream/master"
+[user]
+	email = AUTHOREMAIL
+	name = AUTHORNAME
