@@ -12,35 +12,79 @@ dotfiles=(
 	".profile"
 	".direnv"
 )
+
 dotpaths=(
 	".oh-my-zsh"
 	".tmux"
 )
+
 localdotpaths=(
 	"scripts"
 )
 
-info () {
+function info () {
   printf "[ \033[00;34m..\033[0m ] $1"
 }
 
-infoline () {
+function infoline () {
   printf "\r[ \033[00;34m-\033[0m ] $1\n"
 }
 
-user () {
+function user () {
   printf "\r[ \033[0;33m?\033[0m ] $1 "
 }
 
-success () {
+function success () {
   printf "\r\033[2K[ \033[00;32mOK\033[0m ] $1\n"
 }
 
-fail () {
+function fail () {
   printf "\r\033[2K[\033[0;31mFAIL\033[0m] $1\n"
   echo ''
   exit
 }
+
+if [[ "$OSTYPE" == "darwin"* ]] ; then
+  _os_name="darwin"
+  _os_version=""
+  _os_id="darwin"
+  readonly _dir=$(dirname "$(readlink "$0" || echo "$(echo "$0" | sed -e 's,\\,/,g')")")
+
+elif [[ "$OSTYPE" == "linux-gnu" ]] || [[ "$OSTYPE" == "linux-musl" ]] ; then
+  readonly _dir=$(dirname "$(readlink -f "$0" || echo "$(echo "$0" | sed -e 's,\\,/,g')")")
+
+  if [[ -f /etc/os-release ]] ; then
+    source /etc/os-release
+    _os_name="$NAME"
+    _os_version="$VERSION_ID"
+    _os_id="$ID"
+    _os_id_like="$ID_LIKE"
+
+  elif type lsb_release >/dev/null 2>&1 ; then
+    _os_name=$(lsb_release -si)
+    _os_version=$(lsb_release -sr)
+
+  elif [[ -f /etc/lsb-release ]] ; then
+    source /etc/lsb-release
+    _os_name="$DISTRIB_ID"
+    _os_version="$DISTRIB_RELEASE"
+
+  elif [[ -f /etc/debian_version ]] ; then
+    _os_name="Debian"
+    _os_version=$(cat /etc/debian_version)
+
+  elif [[ -f /etc/redhat-release ]] ; then
+    _os_name=$(awk '{print $1}' /etc/redhat-release)
+    _os_version=$(awk '{print $4}' /etc/redhat-release)
+
+  elif [[ -f /etc/centos-release ]] ; then
+    _os_name=$(awk '{print $1}' /etc/centos-release)
+    _os_version=$(awk '{print $4}' /etc/centos-release)
+
+  else
+    fail "Apt installer is not available on your system."
+  fi
+fi
 
 setup_gitconfig () {
   if [ -f .gitconfig.template ]
@@ -131,23 +175,64 @@ install_dotfiles () {
   done
 }
 
+# Install OSX packages
+if [[ "$_os_name" == "darwin" ]] || \
+   [[ "$_os_id" == "darwin" ]] || \
+   [[ "$_os_id_like" == "darwin" ]] ; then
+
+  # System tools.
+  brew install coreutils gnu-getopt gnu-sed openssl curl bc jq php72 \
+  libmaxminddb geoipupdate python rsync
+
 # Install apt packages
-user "Run apt installer (sudo required)? [Y]es to proceed, anything else to skip."
-read -n 1 action
-case "$action" in
-  Y )
-    infoline 'apt installs starting'
-    sudo apt install -y \
-      make automake autoconf libreadline-dev \
-      libncurses-dev libssl-dev libyaml-dev \
-      libxslt-dev libffi-dev libtool unixodbc-dev \
-      git nmap unzip curl tmux zsh #docker.io
-    success 'apt installs complete!'
-    ;;
-  * )
-    infoline "Skipping apt deployments"
-    ;;
-esac
+elif [[ "$_os_name" == "debian" ]] || \
+     [[ "$_os_name" == "ubuntu" ]] || \
+     [[ "$_os_id" == "debian" ]] || \
+     [[ "$_os_id" == "ubuntu" ]] || \
+     [[ "$_os_id_like" == "debian" ]] || \
+     [[ "$_os_id_like" == "ubuntu" ]] ; then
+
+  user "Run apt installer (sudo required)? [Y]es to proceed, anything else to skip."
+  read -n 1 action
+  case "$action" in
+    Y )
+      infoline 'apt deployment starting...'
+      sudo apt-get update
+      sudo apt install -y \
+        ca-certificates dnsutils gnupg apt-utils openssl \
+        bc jq mmdb-bin libmaxminddb0 libmaxminddb-dev python python-pip rsync \
+        make automake autoconf libreadline-dev \
+        libncurses-dev libssl-dev libyaml-dev \
+        libxslt-dev libffi-dev libtool unixodbc-dev \
+        git unzip curl tmux zsh nghttp2 nodejs alien
+      
+      sudo apt-get install -y --reinstall procps
+
+      curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
+      sudo npm install -g observatory-cli
+
+      rm -rf nmap_7.70-2_amd64.deb
+      wget https://nmap.org/dist/nmap-7.70-1.x86_64.rpm
+      sudo alien nmap-7.70-1.x86_64.rpm
+      sudo dpkg -i nmap_7.70-2_amd64.deb
+      rm -rf nmap_7.70-2_amd64.deb
+
+      wget -c https://github.com/maxmind/geoipupdate/releases/download/v4.0.3/geoipupdate_4.0.3_linux_amd64.deb
+      sudo dpkg -i geoipupdate_4.0.3_linux_amd64.deb
+      rm geoipupdate_4.0.3_linux_amd64.deb
+      if [[ -e "/usr/share/GeoIP/GeoLite2-Country.mmdb" ]] ; then
+        cd 
+        sudo wget -O /usr/share/GeoIP/GeoLite2-Country.mmdb.gz -c http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz
+        sudo gzip -d /usr/share/GeoIP/GeoLite2-Country.mmdb.gz
+        sudo geoipupdate
+      fi
+      success 'apt installs complete!'
+      ;;
+    * )
+      infoline "Skipping apt deployments"
+      ;;
+  esac
+fi
 
 here=`pwd`
 
