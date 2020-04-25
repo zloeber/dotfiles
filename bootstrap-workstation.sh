@@ -20,37 +20,24 @@ localdotpaths=(
 	"scripts"
 )
 
-here=`pwd`
-
-sudo apt install -y \
-  make automake autoconf libreadline-dev \
-  libncurses-dev libssl-dev libyaml-dev \
-  libxslt-dev libffi-dev libtool unixodbc-dev \
-  unzip curl tmux zsh #docker.io
-
-## install githubapp, direnv, asdf, and xpanes
-make deps
-
-echo ''
-
 info () {
-  printf "  [ \033[00;34m..\033[0m ] $1"
+  printf "[ \033[00;34m..\033[0m ] $1"
 }
 
-debug () {
-  printf "  [ \033[00;34m..\033[0m ] $1\n"
+infoline () {
+  printf "\r[ \033[00;34m-\033[0m ] $1\n"
 }
 
 user () {
-  printf "\r  [ \033[0;33m?\033[0m ] $1 "
+  printf "\r[ \033[0;33m?\033[0m ] $1 "
 }
 
 success () {
-  printf "\r\033[2K  [ \033[00;32mOK\033[0m ] $1\n"
+  printf "\r\033[2K[ \033[00;32mOK\033[0m ] $1\n"
 }
 
 fail () {
-  printf "\r\033[2K  [\033[0;31mFAIL\033[0m] $1\n"
+  printf "\r\033[2K[\033[0;31mFAIL\033[0m] $1\n"
   echo ''
   exit
 }
@@ -58,7 +45,7 @@ fail () {
 setup_gitconfig () {
   if [ -f .gitconfig.template ]
   then
-    info 'setup gitconfig'
+    infoline 'setup gitconfig'
     git_credential='cache'
     if [ "$(uname -s)" == "Darwin" ]
     then
@@ -144,29 +131,57 @@ install_dotfiles () {
   done
 }
 
-setup_gitconfig
-install_dotfiles "$dotfiles"
-install_dotfiles "$dotpath"
-install_dotfiles "$localdotpath"
+# Install apt packages
+user "Run apt installer (sudo required)? [Y]es to proceed, anything else to skip."
+read -n 1 action
+case "$action" in
+  Y )
+    infoline 'apt installs starting'
+    sudo apt install -y \
+      make automake autoconf libreadline-dev \
+      libncurses-dev libssl-dev libyaml-dev \
+      libxslt-dev libffi-dev libtool unixodbc-dev \
+      git nmap unzip curl tmux zsh #docker.io
+    success 'apt installs complete!'
+    ;;
+  * )
+    infoline "Skipping apt deployments"
+    ;;
+esac
 
-# for dotfile in "${dotfiles[@]}";do
-#   if [ -f "${HOME}/${dotfile}" ] ; then
-# 	echo "${HOME}/${dotfile} -> Already exists, removing first (press any key to continue, Ctrl+C to abort!)"
-# 	read
-# 	rm "${HOME}/${dotfile}"
-#   fi
-#   echo "Soft linking file: ${here}/${dotfile}"
-#   ln -sf ${here}/${dotfile} "${HOME}/${dotfile}"
-# done
-# for dotpath in "${dotpaths[@]}";do
-#  echo "Linking path: ${here}/${dotpath}"
-#  ln -sf "${here}/${dotpath}" "${HOME}/"
-# done
+here=`pwd`
 
-# for localdotpath in "${localdotpaths[@]}";do
-#  echo "Linking .local path: ${here}/${localdotpath}"
-#  ln -sf "${here}/${localdotpath}" "${HOME}/.local"
-# done
+## install githubapp (ghr-installer), asdf, xpanes, broot, and other apps that are not so easy to automate
+## or are used to automatically install other things.
+infoline 'Installing dependencies'
+make deps
+success 'Dependencies installed!'
+
+# Install .gitconfig
+user "Run .gitconfig installer? [Y]es to proceed, anything else to skip."
+read -n 1 action
+case "$action" in
+  Y )
+    setup_gitconfig
+    ;;
+  * )
+    infoline "Skipping .gitconfig deployment"
+    ;;
+esac
+
+# Install dotfiles
+user "Run dotfile symlink process? [Y]es to proceed, anything else to skip."
+read -n 1 action
+case "$action" in
+  Y )
+    install_dotfiles "$dotfiles"
+    install_dotfiles "$dotpath"
+    install_dotfiles "$localdotpath"
+    ;;
+  * )
+    infoline "Skipping .gitconfig deployment"
+    ;;
+esac
 
 ## Setup ASDF for app version management
 #  Also install the latest version of the binaries for each plugin
@@ -174,21 +189,55 @@ install_dotfiles "$localdotpath"
 asdf=$HOME/.asdf/bin/asdf
 export PATH="$HOME/.asdf/bin:$PATH"
 
-# Install the asdf plugin for each tool listed in .tool-versions (which is now linked to your home directory)
-for plugin in $(cut -d ' ' -f 1 ${here}/.tool-versions); do
-  if ! $asdf plugin-list | grep $plugin > /dev/null; then
-    $asdf plugin add $plugin
-  fi
-done
-
-# Work around for nodejs installation issues in asdf
-bash $HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring
-
 # Install all versions of tools listed in .tool-versions
-#$asdf install
+user "Install asdf apps (listed in .tool-versions)? [Y]es to proceed, anything else to skip."
+read -n 1 action
+case "$action" in
+  Y )
+    infoline 'asdf app deployment starting'
+    # Install the asdf plugin for each tool listed in .tool-versions (which is now linked to your home directory)
+    for plugin in $(cut -d ' ' -f 1 ${here}/.tool-versions); do
+      if ! $asdf plugin-list | grep $plugin > /dev/null; then
+        $asdf plugin add $plugin
+      fi
+    done
 
-echo "Install of dotfiles complete!"
+    # Work around for nodejs installation issues in asdf
+    bash $HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring
+
+    $asdf install
+    success 'asdf app deployment complete!'
+    ;;
+  * )
+    infoline "Skipping app installations via asdf."
+    ;;
+esac
+
+githubapp=${HOME}/.local/app/ghr-installer
+user "Install githubapps (listed in githubapp.list)? [I]nstall only, [R]eset install (upgrade), anything else to skip."
+read -n 1 action
+case "$action" in
+  I )
+    infoline 'githubapp deployment starting'
+    for appname in $(cat ${here}/githubapp.list); do
+      make --no-print-directory -C ${githubapp} auto ${appname}
+    done
+    success 'githubapp deployment complete!'
+    ;;
+  R )
+    infoline 'githubapp deployment starting'
+    for appname in $(cat ${here}/githubapp.list); do
+      make --no-print-directory -C ${githubapp} reset ${appname}
+      make --no-print-directory -C ${githubapp} auto ${appname}
+    done
+    success 'githubapp deployment (reset/update) complete!'
+    ;;
+  * )
+    infoline "Skipping githubapp installation."
+    ;;
+esac
+
+infoline ''
+success "Process complete!"
 echo ""
-echo "Now change your shell to zsh with: chsh -s /usr/bin/zsh ${whoami}"
-echo ""
-echo "Finally, logout of your shell and back in again to complete the process."
+infoline "Change your shell to zsh (chsh -s /usr/bin/zsh ${whoami}) then logout of your shell and back in again."
