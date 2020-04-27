@@ -6,7 +6,6 @@ export ZGEN_DIR="${ZDOTDIR:-$HOME}"/.zgen
 ZGEN_RESET_ON_CHANGE=(
   ${ZDOTDIR:-$HOME}/.zshrc
   ${ZDOTDIR:-$HOME}/.zshrc.local
-  ${ZDOTDIR:-$HOME}/.zprofile
 )
 #ZSH="$ZGEN_DIR/robbyrussell/oh-my-zsh-master"
 ZGEN_PLUGIN_UPDATE_DAYS=5

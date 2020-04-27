@@ -216,6 +216,7 @@ elif [[ "$_os_name" == "debian" ]] || \
       sudo alien nmap-7.70-1.x86_64.rpm
       sudo dpkg -i nmap_7.70-2_amd64.deb
       rm -rf nmap_7.70-2_amd64.deb
+      rm -rf nmap-7.70-1.x86_64.rpm
 
       wget -c https://github.com/maxmind/geoipupdate/releases/download/v4.0.3/geoipupdate_4.0.3_linux_amd64.deb
       sudo dpkg -i geoipupdate_4.0.3_linux_amd64.deb
