@@ -37,3 +37,7 @@ rm-from-path() {
 if [[ -d ${HOME}/.local/app/ghr-installer ]]; then
     alias githubapp="make --no-print-directory -C ${HOME}/.local/app/ghr-installer"
 fi
+
+## Console copy/paste to clipboard
+alias ctrlc='xclip -selection c'
+alias ctrlv='xclip -selection c -o'
