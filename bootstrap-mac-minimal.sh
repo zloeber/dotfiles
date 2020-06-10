@@ -100,25 +100,24 @@ if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
 fi
 
 # System tools.
-brew upgrade coreutils gnu-getopt gnu-sed openssl curl bc jq python rsync \
-  nmap automake 
+brew install coreutils gnu-getopt gnu-sed openssl curl bc jq python rsync nmap automake 
 
 make .dep/direnv .dep/asdf
 
 here=`pwd`
 
 dotfiles=(
-	".zshrc"
-	".tmux.conf.local"
-	".zshrc.local"
-	".p10k.zsh"
-	".tool-versions"
-	".bash_aliases"
-	".profile"
-	".direnv"
+  ".zshrc"
+  ".tmux.conf.local"
+  ".zshrc.local"
+  ".p10k.zsh"
+  ".tool-versions"
+  ".bash_aliases"
+  ".profile"
+  ".direnv"
   ".oh-my-zsh"
-	".tmux"
-	"scripts"
+  ".tmux"
+  "scripts"
 )
 
 link_files () {
