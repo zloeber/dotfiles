@@ -1,8 +1,6 @@
-python 3.7.2 2.7.15 system
+python 3.7.7 2.7.15 system
 conftest 0.9.1 latest
 golang 1.13.9
-helm 3.1.2 latest
-helmfile 0.102.0 latest
 istioctl 1.5.0  latest
 jx 2.0.1244 latest
 k6 0.26.1 latest

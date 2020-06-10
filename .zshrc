@@ -85,3 +85,6 @@ if ls ${ASDF_BIN_PATH}/asdf &>/dev/null; then
   autoload -Uz compinit
   compinit
 fi
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /home/zloeber/.asdf/installs/vault/1.3.3+ent/bin/vault vault

@@ -11,7 +11,7 @@ dotfiles=(
 	".bash_aliases"
 	".profile"
 	".direnv"
-  ".oh-my-zsh"
+        ".oh-my-zsh"
 	".tmux"
 	"scripts"
 )
