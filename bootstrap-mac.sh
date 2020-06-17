@@ -34,8 +34,6 @@ export OLD_DOTFILES_BAK="${HOME}/old_dotfiles_bak"
 export DICTIONARY_DIR="${HOME}/Library/Spelling"
 export DOTFILES_REPO_URL="https://github.com/joshukraine/dotfiles.git"
 export DOTFILES_DIR="${HOME}/dotfiles"
-export BOOTSTRAP_REPO_URL="https://github.com/joshukraine/mac-bootstrap.git"
-export BOOTSTRAP_DIR="${HOME}/mac-bootstrap"
 export TIME_ZONE="America/Chicago"
 export DEFAULT_SHELL="zsh"
 
@@ -43,14 +41,6 @@ PS3="> "
 
 comp=$(scutil --get ComputerName)
 host=$(scutil --get LocalHostName)
-
-if [ -z "$comp" ] || [ -z "$host" ]; then
-  DEFAULT_COMPUTER_NAME="My Mac Computer"
-  DEFAULT_HOST_NAME="my-mac-computer"
-else
-  DEFAULT_COMPUTER_NAME="$comp"
-  DEFAULT_HOST_NAME="$host"
-fi
 
 if [ "$osname" == "Linux" ]; then
   fail "Oops, looks like you're on a Linux machine. Please have a look at
@@ -77,17 +67,7 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 set -e
 
-printf "\\nEnter a name for your Mac. (Leave blank for default: %s)\\n" "$DEFAULT_COMPUTER_NAME"
-read -r -p "> " COMPUTER_NAME
-export COMPUTER_NAME=${COMPUTER_NAME:-$DEFAULT_COMPUTER_NAME}
-
-printf "\\nEnter a host name for your Mac. (Leave blank for default: %s)\\n" "$DEFAULT_HOST_NAME"
-read -r -p "> " HOST_NAME
-export HOST_NAME=${HOST_NAME:-$DEFAULT_HOST_NAME}
-
 infoline "\\nLooks good. Here's what we've got so far.\\n"
-printf "Computer name:     ==> [%s]\\n" "$COMPUTER_NAME"
-printf "Host name:         ==> [%s]\\n" "$HOST_NAME"
 printf "Time zone:         ==> [%s]\\n" "$TIME_ZONE"
 printf "Default shell:     ==> [%s]\\n" "$DEFAULT_SHELL"
 
@@ -100,7 +80,7 @@ if [[ ! "$REPLY" =~ ^[Yy]$ ]]; then
 fi
 
 # System tools.
-brew install coreutils gnu-getopt gnu-sed openssl curl bc jq python rsync nmap automake 
+brew bundle
 
 make .dep/direnv .dep/asdf
 
@@ -114,6 +94,7 @@ dotfiles=(
   ".tool-versions"
   ".bash_aliases"
   ".profile"
+  ".zprofile"
   ".direnv"
   ".oh-my-zsh"
   ".tmux"
@@ -264,4 +245,4 @@ esac
 infoline ''
 success "Process complete!"
 echo ""
-infoline "Change your shell to zsh (chsh -s /usr/bin/zsh ${whoami}) then logout of your shell and back in again."
+infoline "Change your shell to zsh (chsh -s /bin/zsh) then logout of your shell and back in again."
