@@ -97,3 +97,6 @@ fi
 autoload -U +X bashcompinit && bashcompinit
 
 # complete -o nospace -C $HOME/.asdf/installs/vault/1.3.3+ent/bin/vault vault
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
