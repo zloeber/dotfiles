@@ -1,14 +1,22 @@
 # .zshrc
 
-# setup zgen
+# setup zgen by downloading to your home path.
+## NOTE: To completely reset things if your shell whacks out:
+## rm -rf ~/.zgen
+## compaudit | xargs chmod g-w,o-w 
+
 export ZGEN_DIR="${ZDOTDIR:-$HOME}"/.zgen
+
 [[ -d "$ZGEN_DIR" ]] || git clone https://github.com/tarjoilija/zgen.git --depth=1 "$ZGEN_DIR"
+
 ZGEN_RESET_ON_CHANGE=(
   ${ZDOTDIR:-$HOME}/.zshrc
   ${ZDOTDIR:-$HOME}/.zshrc.local
 )
+
 #ZSH="$ZGEN_DIR/robbyrussell/oh-my-zsh-master"
 ZGEN_PLUGIN_UPDATE_DAYS=5
+
 source "$ZGEN_DIR/zgen.zsh"
 
 # if the init scipt doesn't exist then get to it!
@@ -38,8 +46,8 @@ if ! zgen saved; then
     zgen load zsh-users/zsh-history-substring-search
     zgen load zsh-users/zsh-syntax-highlighting
     zgen load unixorn/autoupdate-zgen
-   
-     # completions
+
+    # completions
     zgen load zsh-users/zsh-completions
     zgen load zsh-users/zsh-autosuggestions
 
@@ -87,4 +95,5 @@ if ls ${ASDF_BIN_PATH}/asdf &>/dev/null; then
 fi
 
 autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /home/zloeber/.asdf/installs/vault/1.3.3+ent/bin/vault vault
+
+# complete -o nospace -C $HOME/.asdf/installs/vault/1.3.3+ent/bin/vault vault

@@ -186,8 +186,7 @@ if [[ "$_os_name" == "darwin" ]] || \
    [[ "$_os_id_like" == "darwin" ]] ; then
 
   # System tools.
-  brew install coreutils gnu-getopt gnu-sed openssl curl bc jq php72 \
-  libmaxminddb geoipupdate python rsync
+  brew install coreutils gnu-getopt gnu-sed openssl curl bc jq php72 python3 rsync
 
 # Install apt packages
 elif [[ "$_os_name" == "debian" ]] || \
@@ -205,7 +204,7 @@ elif [[ "$_os_name" == "debian" ]] || \
       sudo apt-get update
       sudo apt install -y \
         ca-certificates dnsutils gnupg apt-utils openssl \
-        bc jq mmdb-bin libmaxminddb0 libmaxminddb-dev python python-pip rsync \
+        bc jq mmdb-bin libmaxminddb0 libmaxminddb-dev python3 python3-pip rsync \
         make automake autoconf libreadline-dev \
         libncurses-dev libssl-dev libyaml-dev \
         libxslt-dev libffi-dev libtool unixodbc-dev \
@@ -213,25 +212,6 @@ elif [[ "$_os_name" == "debian" ]] || \
       
       sudo apt-get install -y --reinstall procps
 
-      # curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
-      # sudo npm install -g observatory-cli
-
-      # rm -rf nmap_7.70-2_amd64.deb
-      # wget https://nmap.org/dist/nmap-7.70-1.x86_64.rpm
-      # sudo alien nmap-7.70-1.x86_64.rpm
-      # sudo dpkg -i nmap_7.70-2_amd64.deb
-      # rm -rf nmap_7.70-2_amd64.deb
-      # rm -rf nmap-7.70-1.x86_64.rpm
-
-      # wget -c https://github.com/maxmind/geoipupdate/releases/download/v4.0.3/geoipupdate_4.0.3_linux_amd64.deb
-      # sudo dpkg -i geoipupdate_4.0.3_linux_amd64.deb
-      # rm geoipupdate_4.0.3_linux_amd64.deb
-      # if [[ -e "/usr/share/GeoIP/GeoLite2-Country.mmdb" ]] ; then
-      #   cd 
-      #   sudo wget -O /usr/share/GeoIP/GeoLite2-Country.mmdb.gz -c http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz
-      #   sudo gzip -d /usr/share/GeoIP/GeoLite2-Country.mmdb.gz
-      #   sudo geoipupdate
-      # fi
       success 'apt installs complete!'
       ;;
     * )

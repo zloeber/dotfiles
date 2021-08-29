@@ -85,63 +85,7 @@ if [[ "$_os_name" == "darwin" ]] || \
   mv go /usr/lib &&
   ln -s /usr/lib/go/bin/go /usr/bin/go
 
-  brew install node composer
-
-  # For Mozilla-Observatory.
-  npm install -g observatory-cli
-
-  # For Ssllabs API.
-  brew install ssllabs-scan
-
-  # For mixed-content-scan.
-  composer global require bramus/mixed-content-scan
-
-  # For testssl.sh.
-  brew install testssl
-
-  # For Nmap NSE Library.
-  brew install nmap
-
-  git clone https://github.com/scipag/vulscan /opt/scipag_vulscan && \
-  ln -s /opt/scipag_vulscan /usr/share/nmap/scripts/vulscan
-
-  # For WhatWaf.
-  # git clone https://github.com/ekultek/whatwaf.git /opt/whatwaf
-  # cd /opt/whatwaf
-
-  # chmod +x whatwaf.py
-  # pip install -r requirements.txt
-  # ./setup.sh install
-  # cp ~/.whatwaf/.install/bin/whatwaf /usr/bin/whatwaf
-  # ./setup.sh uninstall
-
-  # pip install -r requirements.txt
-  # ln -s /opt/whatwaf/whatwaf /usr/bin/whatwaf
-
-  # For Wafw00f.
-  git clone https://github.com/EnableSecurity/wafw00f /opt/wafw00f
-  cd /opt/wafw00f
-  # pip install --upgrade pip
-  # pip install --upgrade setuptools
-  python setup.py install
-
-  # For SubFinder
-  # go get github.com/subfinder/subfinder && \
-  go get -v github.com/projectdiscovery/subfinder/cmd/subfinder && \
-  ln -s "${GOPATH}/bin/subfinder" /usr/bin/subfinder
-
-  # For Nghttp2
-  brew install nghttp2
-
-  if [[ -e "/usr/share/GeoIP/GeoLite2-Country.mmdb" ]] ; then
-
-    cd /usr/share/GeoIP
-    wget -c http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz
-    gzip -d GeoLite2-Country.mmdb.gz
-
-  fi
-
-  geoipupdate
+  brew install node nmap
 
 elif [[ "$_os_name" == "debian" ]] || \
      [[ "$_os_name" == "ubuntu" ]] || \
@@ -152,113 +96,43 @@ elif [[ "$_os_name" == "debian" ]] || \
 
   _tread
 
-  # System tools.
-  apt-get update
+  # VSCode
+  curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg                                                                                                                                                   ─╯
+  install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+  sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list' 
+
+  apt update && apt upgrade -y
 
   # Install go.
-  wget https://dl.google.com/go/go1.13.5.linux-amd64.tar.gz && \
-  tar -xvf go1.13.5.linux-amd64.tar.gz && \
+  wget https://dl.google.com/go/go1.16.4.linux-amd64.tar.gz && \
+  tar -xvf go1.16.4.linux-amd64.tar.gz && \
   mv go /usr/lib &&
   ln -s /usr/lib/go/bin/go /usr/bin/go
+  rm go1.16.4.linux-amd64.tar.gz
 
-  apt-get install -y ca-certificates dnsutils gnupg apt-utils unzip openssl \
-  curl bc jq mmdb-bin libmaxminddb0 libmaxminddb-dev python python-pip rsync
+  apt install -y \
+    ca-certificates \
+    dnsutils \
+    gnupg \
+    apt-utils \
+    unzip \
+    openssl \
+    curl \
+    bc \
+    jq \
+    python3 \
+    python3-pip \
+    rsync \
+    nodejs \
+    code \
+    byobu \
+    zsh \
+    make \
+    automake \
+    tmux \
+    git
 
-  apt-get install -y --reinstall procps
-
-  wget -c https://github.com/maxmind/geoipupdate/releases/download/v4.0.3/geoipupdate_4.0.3_linux_amd64.deb &&
-  dpkg -i geoipupdate_4.0.3_linux_amd64.deb
-
-  # For Mozilla-Observatory.
-  curl -sL https://deb.nodesource.com/setup_10.x | bash -
-  apt-get install -y nodejs
-  npm install -g observatory-cli
-
-  # For Ssllabs API.
-  go get github.com/ssllabs/ssllabs-scan
-  # It's important - PATH is hardcoded in src/settings.
-  ln -s /opt/go/bin/ssllabs-scan /usr/bin/ssllabs-scan
-
-  # PHP 7.0
-  wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
-  echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
-  # alternative:
-  #   add-apt-repository ppa:ondrej/php
-  apt-get update
-  # apt-get install -y php7.3-curl php7.3-xml php7.3-cli php7.3-mbstring
-  apt-get install -y php7.0-curl php7.0-xml php7.0-cli php7.0-mbstring
-
-  # For mixed-content-scan.
-  curl -sS https://getcomposer.org/installer -o composer-setup.php
-  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-
-  composer global require bramus/mixed-content-scan
-
-  # It's important - PATH is hardcoded in src/settings.
-  if [[ -d ${HOME}/.composer ]] ; then
-
-    ln -s /root/.composer/vendor/bramus/mixed-content-scan/bin/mixed-content-scan \
-    /usr/bin/mixed-content-scan
-
-  elif [[ -d ${HOME}/.config/composer ]] ; then
-
-    ln -s /root/.config/composer/vendor/bramus/mixed-content-scan/bin/mixed-content-scan \
-    /usr/bin/mixed-content-scan
-
-  fi
-
-  # For testssl.sh.
-  git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh
-  chmod +x /opt/testssl.sh/testssl.sh
-  ln -s /opt/testssl.sh/testssl.sh /usr/bin/testssl.sh
-
-  # For Nmap NSE Library.
-  # apt-get install nmap
-  wget https://nmap.org/dist/nmap-7.70-1.x86_64.rpm
-  apt -y install alien
-  alien nmap-7.70-1.x86_64.rpm
-  dpkg -i nmap_7.70-2_amd64.deb
-
-  git clone https://github.com/scipag/vulscan /opt/scipag_vulscan && \
-  ln -s /opt/scipag_vulscan /usr/share/nmap/scripts/vulscan
-
-  # For WhatWaf.
-  # git clone https://github.com/ekultek/whatwaf.git /opt/whatwaf
-  # cd /opt/whatwaf
-
-  # chmod +x whatwaf.py
-  # pip install -r requirements.txt
-  # ./setup.sh install
-  # cp ~/.whatwaf/.install/bin/whatwaf /usr/bin/whatwaf
-  # ./setup.sh uninstall
-
-  # pip install -r requirements.txt
-  # ln -s /opt/whatwaf/whatwaf /usr/bin/whatwaf
-
-  # For Wafw00f.
-  git clone https://github.com/EnableSecurity/wafw00f /opt/wafw00f
-  cd /opt/wafw00f
-  # pip install --upgrade pip
-  # pip install --upgrade setuptools
-  python setup.py install
-
-  # For SubFinder
-  # go get github.com/subfinder/subfinder && \
-  go get -v github.com/projectdiscovery/subfinder/cmd/subfinder && \
-  ln -s "${GOPATH}/bin/subfinder" /usr/bin/subfinder
-
-  # For Nghttp2
-  apt-get install nghttp2
-
-  if [[ -e "/usr/share/GeoIP/GeoLite2-Country.mmdb" ]] ; then
-
-    cd /usr/share/GeoIP
-    wget -c http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz
-    gzip -d GeoLite2-Country.mmdb.gz
-
-  fi
-
-  geoipupdate
+  apt install -y --reinstall procps
 
 elif [[ "$_os_name" == "CentOS Linux" ]] || \
      [[ "$_os_id" == "centos" ]] || \
@@ -282,83 +156,6 @@ elif [[ "$_os_name" == "CentOS Linux" ]] || \
 
   # wget -c https://github.com/maxmind/geoipupdate/releases/download/v4.0.3/geoipupdate_4.0.3_linux_amd64.rpm &&
   # rpm -Uvh geoipupdate_4.0.3_linux_amd64.rpm
-
-  # For Mozilla-Observatory.
-  wget http://nodejs.org/dist/v0.10.30/node-v0.10.30-linux-x64.tar.gz
-  tar --strip-components 1 -xzvf node-v* -C /usr/local
-  npm install -g observatory-cli
-
-  # For Ssllabs API.
-  go get github.com/ssllabs/ssllabs-scan
-  # It's important - PATH is hardcoded in src/settings.
-  ln -s /opt/go/bin/ssllabs-scan /usr/bin/ssllabs-scan
-
-  # PHP 7.0
-  yum install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
-  yum-config-manager --enable remi-php70
-
-  yum install -y php-curl php-xml php-cli php-mbstring
-
-  # For mixed-content-scan.
-  curl -sS https://getcomposer.org/installer -o composer-setup.php
-  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-
-  composer global require bramus/mixed-content-scan
-
-  # It's important - PATH is hardcoded in src/settings.
-  if [[ -d ${HOME}/.composer ]] ; then
-
-    ln -s /root/.composer/vendor/bramus/mixed-content-scan/bin/mixed-content-scan \
-    /usr/bin/mixed-content-scan
-
-  elif [[ -d ${HOME}/.config/composer ]] ; then
-
-    ln -s /root/.config/composer/vendor/bramus/mixed-content-scan/bin/mixed-content-scan \
-    /usr/bin/mixed-content-scan
-
-  fi
-
-  # For testssl.sh.
-  git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh
-  chmod +x /opt/testssl.sh/testssl.sh
-  ln -s /opt/testssl.sh/testssl.sh /usr/bin/testssl.sh
-
-  # For Nmap NSE Library.
-  # apt-get install nmap
-  wget https://nmap.org/dist/nmap-7.70-1.x86_64.rpm
-  rpm -Uvh nmap-7.70-1.x86_64.rpm
-
-  git clone https://github.com/scipag/vulscan /opt/scipag_vulscan && \
-  ln -s /opt/scipag_vulscan /usr/share/nmap/scripts/vulscan
-
-
-  # For Wafw00f.
-  git clone https://github.com/EnableSecurity/wafw00f /opt/wafw00f
-  cd /opt/wafw00f
-  # pip install --upgrade pip
-  # pip install --upgrade setuptools
-  python setup.py install
-
-  # For SubFinder
-  # go get github.com/subfinder/subfinder && \
-  go get -v github.com/projectdiscovery/subfinder/cmd/subfinder && \
-  ln -s "${GOPATH}/bin/subfinder" /usr/bin/subfinder
-
-  wget -P /usr/share/GeoIP https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz && \
-  gunzip /usr/share/GeoIP2/*.mmdb.gz
-
-  # For Nghttp2
-  yum install nghttp2
-
-  if [[ -e "/usr/share/GeoIP/GeoLite2-Country.mmdb" ]] ; then
-
-    cd /usr/share/GeoIP
-    wget -c http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz
-    gzip -d GeoLite2-Country.mmdb.gz
-
-  fi
-
-  # geoipupdate
 
 else
 
