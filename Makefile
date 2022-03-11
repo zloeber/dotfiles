@@ -2,23 +2,23 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 ROOT_PATH := $(abspath $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST))))))
-BIN_PATH := ${HOME}/.local/bin
+LOCAL_BIN_PATH := ${HOME}/.local/bin
 APP_PATH := ${HOME}/.local/app
 
 # Generic shared variables
 ifeq ($(shell uname -m),x86_64)
-ARCH ?= "amd64"
+ARCH?=amd64
 endif
 ifeq ($(shell uname -m),i686)
-ARCH ?= "386"
+ARCH?=386
 endif
 ifeq ($(shell uname -m),aarch64)
-ARCH ?= "arm"
+ARCH?=arm
 endif
 ifeq ($(OS),Windows_NT)
-OS := Windows
+OS:=Windows
 else
-OS := $(shell sh -c 'uname -s 2>/dev/null || echo not' | tr '[:upper:]' '[:lower:]')
+OS:=$(shell sh -c 'uname -s 2>/dev/null || echo not' | tr '[:upper:]' '[:lower:]')
 endif
 
 .PHONY: help
@@ -36,14 +36,14 @@ ifeq (,$(wildcard $(APP_PATH)/ghr-installer/Makefile))
 endif
 
 .dep/direnv: .dep/githubapp ## Install direnv
-ifeq (,$(wildcard $(BIN_PATH)/direnv))
+ifeq (,$(wildcard $(LOCAL_BIN_PATH)/direnv))
 	@$(MAKE) -C $(APP_PATH)/ghr-installer install direnv
 endif
 
 .dep/xpanes: ## Install xpanes
-ifeq (,$(wildcard $(BIN_PATH)/xpanes))
-	wget https://raw.githubusercontent.com/greymd/tmux-xpanes/v4.1.1/bin/xpanes -O $(BIN_PATH)/xpanes
-	chmod +x $(BIN_PATH)/xpanes
+ifeq (,$(wildcard $(LOCAL_BIN_PATH)/xpanes))
+	wget https://raw.githubusercontent.com/greymd/tmux-xpanes/v4.1.1/bin/xpanes -O $(LOCAL_BIN_PATH)/xpanes
+	chmod +x $(LOCAL_BIN_PATH)/xpanes
 endif
 
 .dep/asdf: ## Install asdf-vm
@@ -54,9 +54,9 @@ ifeq (,$(wildcard ${HOME}/.asdf/bin/asdf))
 endif
 
 .dep/broot: ## Install broot directory lister (https://dystroy.org/broot)
-ifeq (,$(wildcard $(BIN_PATH)/broot))
-	curl --retry 3 --retry-delay 5 --fail -sSL -o $(BIN_PATH)/broot https://dystroy.org/broot/download/x86_64-linux/broot
-	chmod +x $(BIN_PATH)/broot
+ifeq (,$(wildcard $(LOCAL_BIN_PATH)/broot))
+	curl --retry 3 --retry-delay 5 --fail -sSL -o $(LOCAL_BIN_PATH)/broot https://dystroy.org/broot/download/x86_64-linux/broot
+	chmod +x $(LOCAL_BIN_PATH)/broot
 endif
 
 show: ## Show some settings

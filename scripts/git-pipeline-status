@@ -1,0 +1,116 @@
+#!/bin/bash
+
+## Given you are in a repo with some known elements you should be able to use this
+# script to lookup the most recent pipeline status in gitlab via the API with
+# the help of this script.
+
+GITLAB_API_PATH=${GITLAB_API_PATH:-"https://gitlab.com/api/v4"}
+GITLAB_API_PRIVATE_TOKEN=${GITLAB_API_PRIVATE_TOKEN:-${GITLAB_TOKEN}}
+
+function info () {
+  printf "\033[2K[ \033[00;34mINFO\033[0m ] ${1}\n"
+}
+
+function success () {
+  printf "\r\033[2K[ \033[00;32mOK\033[0m ] $1\n"
+}
+
+function error () {
+  printf "\r\033[2K[\033[0;31mFAIL\033[0m] $1\n"
+  if [[ "${CICD}" -eq "true"  ]]; then
+    exit 1
+  else
+    exit 0
+  fi
+}
+
+function warn () {
+  printf "\r\033[2K[\033[0;33mWARNING\033[0m] $1\n"
+  echo ''
+}
+
+if ! git status > /dev/null 2>&1; then
+    error "Current directory is not a git repo" >&2
+    exit 1
+fi
+
+if [ -z "$GITLAB_API_PRIVATE_TOKEN" ]; then
+    info  "Please set GITLAB_API_PRIVATE_TOKEN or GITLAB_TOKEN and try again" >&2
+    info "Hint: visit https://gitlab.com/profile/personal_access_tokens" >&2
+    error "private token not found" >&2
+    exit 1
+fi
+
+if [ -n "$GITLAB_REMOTE" ]; then
+    REMOTE=$GITLAB_REMOTE
+elif git remote | grep gitlab >/dev/null 2>&1; then
+    REMOTE=gitlab
+elif git remote | grep origin >/dev/null 2>&1; then
+    REMOTE=origin
+else
+    info "Try setting GITLAB_REMOTE variable to remote name and try again." >&2
+    error "no suitable branch found. Checked 'gitlab' and 'origin'." >&2
+    exit 1
+fi
+
+if ! [ -x "$(command -v jq)" ]; then
+    error 'jq JSON parser required but not found. See https://stedolan.github.io/jq/' >&2
+    exit 1
+fi
+
+PROJECT="${GITLAB_PATH:-${PROJECT:-"$(git remote get-url $REMOTE | sed -Ee 's/.*:(.+)\.git/\1/')"}}"
+PROJECT_ENCODED=`echo "${PROJECT}" | sed -Ee 's|/|%2F|g'`
+
+PROJECT_DATA="$(curl -s --header "PRIVATE-TOKEN: $GITLAB_API_PRIVATE_TOKEN" "${GITLAB_API_PATH}/projects/${PROJECT_ENCODED}" || echo "" )"
+if [ "$PROJECT_DATA" != "" ]; then
+  PROJECT_ID="$(echo "$PROJECT_DATA" | jq -r '.id' 2> /dev/null)"
+  PROJECT_FULL_NAME="$(echo "$PROJECT_DATA" | jq -r '.path_with_namespace' 2> /dev/null)"
+  PIPELINE_REST_PATH="${GITLAB_API_PATH}/projects/${PROJECT_ID}/pipelines?order_by=updated_at"
+  LATEST_PIPELINES=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_API_PRIVATE_TOKEN" $PIPELINE_REST_PATH || echo "")
+  echo $LAST_PIPELINES | jq .
+  if [ "$LATEST_PIPELINES" == "404 Project Not Found" ]; then
+    LAST_PIPELINE_UPDATE="N/A"
+    LAST_PIPELINE_STATUS="N/A"
+    LAST_PIPELINE_URL="N/A"
+  else
+    LAST_PIPELINE_UPDATE=$(echo $LATEST_PIPELINES | jq -r '.[0].updated_at' || echo "N/A")
+    LAST_PIPELINE_STATUS=$(echo $LATEST_PIPELINES | jq -r '.[0].status' || echo "N/A")
+    LAST_PIPELINE_URL=$(echo $LATEST_PIPELINES | jq -r '.[0].web_url' || echo "N/A")
+  fi
+  PROJECT_NAME=${PROJECT_NAME:-"$PROJECT_FULL_NAME"}
+  case $LAST_PIPELINE_STATUS in
+    success)
+      STATUS_ICON="🟢"
+      ;;
+    failed)
+      STATUS_ICON="🔴"
+      ;;
+    manual)
+      STATUS_ICON="🔵"
+      ;;
+    running)
+      STATUS_ICON="⌛"
+      ;;
+
+    *)
+      STATUS_ICON="❔"
+      ;;
+  esac
+
+  if [ -z "$VERBOSE" ]; then
+    printf "${STATUS_ICON} - ${LAST_PIPELINE_STATUS} - ${PROJECT_NAME}"
+  else
+    #info "GIT_SHA: ${GIT_SHA}"
+    printf "PROJECT: $PROJECT\n"
+    printf "STATUS_ICON: $STATUS_ICON\n"
+    printf "BRANCH: $BRANCH\n"
+    printf "PROJECT_ID: ${PROJECT_ID}\n"
+    printf "PROJECT_NAME: ${PROJECT_NAME}\n"
+    printf "LAST_PIPELINE_STATUS: ${LAST_PIPELINE_STATUS}\n"
+    printf "LAST_PIPELINE_UPDATE: ${LAST_PIPELINE_UPDATE}\n"
+    printf "LAST_PIPELINE_URL: ${LAST_PIPELINE_URL}\n"
+    #info "PIPELINE_REST_PATH: ${PIPELINE_REST_PATH}"
+    #info "PROJECT_DATA: $(echo ${PROJECT_DATA}| jq '.')"
+    #info "LATEST_PIPELINES: $(echo ${LATEST_PIPELINES}| jq '.')"
+  fi
+fi

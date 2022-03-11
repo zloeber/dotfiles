@@ -1,0 +1,4 @@
+## Example override file
+## To use, rename this file to a file named poc.override.env to this folder and update the values as needed
+SSH_KEY_PATH=~/.ssh/nonprod-private-key
+#AWS_PROFILE=some-other-profile-name
