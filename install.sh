@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 set -e # -e: exit on error
