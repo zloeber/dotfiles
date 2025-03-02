@@ -1,0 +1,41 @@
+function br {
+    f=$(mktemp)
+    (
+        set +e
+        broot --outcmd "$f" "$@"
+        code=$?
+        if [ "$code" != 0 ]; then
+            rm -f "$f"
+            exit "$code"
+        fi
+    )
+    code=$?
+    if [ "$code" != 0 ]; then
+        return "$code"
+    fi
+    d=$(<"$f")
+    rm -f "$f"
+    eval "$d"
+}
+
+add-to-path() {
+    newelement=${1%/}
+    if [ -d "$1" ] && ! echo $PATH | grep -E -q "(^|:)$newelement($|:)" ; then
+        if [ "$2" = "after" ] ; then
+            PATH="$PATH:$newelement"
+        else
+            PATH="$newelement:$PATH"
+        fi
+    fi
+}
+
+rm-from-path() {
+    PATH="$(echo $PATH | sed -e "s;\(^\|:\)${1%/}\(:\|\$\);\1\2;g" -e 's;^:\|:$;;g' -e 's;::;:;g')"
+}
+
+## Console copy/paste to clipboard for macOS
+[[ "$(uname -s)" = Darwin ]] && alias ctrlc='pbcopy'
+[[ "$(uname -s)" = Darwin ]] && alias ctrlv='pbpaste'
+[[ "$(uname -s)" = Linux ]] && alias ctrlc='xclip -selection c'
+[[ "$(uname -s)" = Linux ]] && alias ctrlv='xclip -o'
+export ANDROID_HOME=/home/zloeber/Android/Sdk

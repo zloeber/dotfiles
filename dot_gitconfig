@@ -1,0 +1,32 @@
+[core]
+  autocrlf = input
+  trustctime = false
+[diff "sopsdiffer"]
+  textconv = sops -d
+[alias]
+  pu = !"git fetch origin -v; git fetch upstream -v; git merge upstream/master"
+[user]
+  email = zloeber@gmail.com
+  name = Zachary Loeber
+[merge]
+  conflictstyle = diff3
+[mergetool.getours]
+  cmd = git-checkout --ours ${MERGED}
+  trustExitCode = true
+[mergetool.mergeours]
+  cmd = git-merge-file --ours ${LOCAL} ${BASE} ${REMOTE} -p > ${MERGED}
+  trustExitCode = true
+[mergetool.keepours]
+  cmd = sed -i '' -e '/^<<<<<<</d' -e '/^|||||||/,/^>>>>>>>/d' ${MERGED}
+  trustExitCode = true
+[mergetool.gettheirs]
+  cmd = git-checkout --theirs ${MERGED}
+  trustExitCode = true
+[mergetool.mergetheirs]
+  cmd = git-merge-file --theirs ${LOCAL} ${BASE} ${REMOTE} -p > ${MERGED}
+  trustExitCode = true
+[mergetool.keeptheirs]
+  cmd = sed -i '' -e '/^<<<<<<</,/^=======/d' -e '/^>>>>>>>/d' ${MERGED}
+  trustExitCode = true
+[url "git@github.com:"]
+  insteadOf = https://github.com/

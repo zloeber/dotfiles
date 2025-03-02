@@ -1,0 +1,14 @@
+[settings]
+experimental = true
+
+[tools]
+go = "1.22.5"
+helm = "latest"
+vendir = "latest"
+fzf = "0.44.0"
+"ubi:yorukot/superfile" = { version = "latest", exe = "spf" }
+node = "latest"
+daytona = "latest"
+superfile = "latest"
+chezmoi = "latest"
+btop = "latest"
