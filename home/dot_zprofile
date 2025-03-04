@@ -1,2 +1,1 @@
-#eval "$(mise activate zsh --shims)"
 eval "$($HOME/.local/bin/mise activate zsh --shims)"
