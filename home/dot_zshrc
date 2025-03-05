@@ -101,8 +101,3 @@ esac
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-# # Added by LM Studio CLI (lms)
-# export PATH="$PATH:/home/zloeber/.lmstudio/bin"
-
-source /home/zloeber/.daytona.completion_script.zsh

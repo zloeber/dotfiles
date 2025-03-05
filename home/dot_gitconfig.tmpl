@@ -6,8 +6,8 @@
 [alias]
   pu = !"git fetch origin -v; git fetch upstream -v; git merge upstream/master"
 [user]
-  email = zloeber@gmail.com
-  name = Zachary Loeber
+  email = {{ .git_email | quote }}
+  name = {{ .full_name | quote }}
 [merge]
   conflictstyle = diff3
 [mergetool.getours]

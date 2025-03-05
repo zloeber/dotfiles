@@ -38,4 +38,4 @@ rm-from-path() {
 [[ "$(uname -s)" = Darwin ]] && alias ctrlv='pbpaste'
 [[ "$(uname -s)" = Linux ]] && alias ctrlc='xclip -selection c'
 [[ "$(uname -s)" = Linux ]] && alias ctrlv='xclip -o'
-export ANDROID_HOME=/home/zloeber/Android/Sdk
+export ANDROID_HOME="${HOME}/Android/Sdk"

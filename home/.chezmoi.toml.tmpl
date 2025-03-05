@@ -1,0 +1,72 @@
+{{- $use_secrets := promptBoolOnce . "use_secrets" "Use secrets from age? (true/false)" -}}
+{{- $git_email := promptStringOnce . "git_email" "Email address" -}}
+{{- $github_user := promptStringOnce . "github_user" "GitHub user ID" -}}
+{{- $full_name := promptStringOnce . "full_name" "Full name of user (shown in git commits)" -}}
+{{- "" -}}
+{{- $osID := .chezmoi.os -}}
+{{- if (and (eq .chezmoi.os "linux") (hasKey .chezmoi.osRelease "id")) -}}
+{{-   $osID = printf "%s-%s" .chezmoi.os .chezmoi.osRelease.id -}}
+{{- end -}}
+
+{{/* detect GitHub codespaces, VSCode remote containers, Docker containers, Multipass VMs, and Vagrant boxes */}}
+{{- if or (env "CODESPACES") (env "REMOTE_CONTAINERS_IPC") (eq .chezmoi.username "root" "ubuntu" "vagrant" "vscode") -}}
+{{-   $ephemeral = true -}}
+{{-   $headless = true -}}
+{{- end -}}
+
+{{/* work around unreliable hostname on darwin */}}
+{{- $hostname := .chezmoi.hostname -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   $computerName := output "scutil" "--get" "ComputerName" | trim -}}
+{{-   if eq $computerName "Tom’s Laptop" -}}
+{{-     $hostname = "toms-laptop" -}}
+{{-   else if eq $computerName "Tom’s MacBook Air" -}}
+{{-     $hostname = "toms-mba" -}}
+{{-   else -}}
+{{-     $hostname = $computerName -}}
+{{-   end -}}
+{{- end -}}
+
+{{- if eq .chezmoi.os "windows" -}}
+{{-   $ephemeral = true -}}
+{{- end -}}
+
+encryption = "age"
+pager = "less -R"
+
+[data]
+  git_email         = {{ $git_email | quote }}
+  github_user       = {{ $github_user | quote }}
+  full_name         = {{ $full_name | quote }}
+  use_secrets       = {{ $use_secrets }}
+  hostname          = {{ $hostname | quote }}
+  osid              = {{ $osID | quote }}
+  xdgCacheDir       = "{{ .chezmoi.homeDir }}/.cache"
+  xdgConfigDir      = "{{ .chezmoi.homeDir }}/.config"
+  xdgDataDir        = "{{ .chezmoi.homeDir }}/.local/share"
+  xdgStateDir       = "{{ .chezmoi.homeDir }}/.local/state"
+
+[edit]
+  apply = true
+
+[age]
+  identity = "~/.config/chezmoi/key.txt"
+  recipient = "age1lk0ajrnj7k0marex3r6vwmd4lgrskg855es8ntv4wgn90g77sszqxwnjqy"
+
+[diff]
+    {{ if lookPath "delta" -}}command = "delta"
+    {{ end -}}
+    exclude = ["scripts"]
+
+{{ if lookPath "code" -}}
+[edit]
+    args    = ["-r", "--wait"]
+    command = "code"
+
+[merge]
+    command = "bash"
+    args = [
+        "-c",
+        "cp '{{ "{{" }} .Target {{ "}}" }}' '{{ "{{" }} .Target {{ "}}" }}.base' && code --new-window --wait --merge '{{ "{{" }} .Destination {{ "}}" }}' '{{ "{{" }} .Target {{ "}}" }}' '{{ "{{" }} .Target {{ "}}" }}.base' '{{ "{{" }} .Source {{ "}}" }}'",
+    ]
+{{ end -}}

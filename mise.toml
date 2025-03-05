@@ -1,2 +1,4 @@
 [tools]
 age = "latest"
+chezmoi = "latest"
+delta = "latest"
