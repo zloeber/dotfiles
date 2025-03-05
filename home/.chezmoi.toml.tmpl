@@ -2,6 +2,9 @@
 {{- $git_email := promptStringOnce . "git_email" "Email address" -}}
 {{- $github_user := promptStringOnce . "github_user" "GitHub user ID" -}}
 {{- $full_name := promptStringOnce . "full_name" "Full name of user (shown in git commits)" -}}
+{{- $ephemeral := false -}}
+{{- $headless := false -}}
+
 {{- "" -}}
 {{- $osID := .chezmoi.os -}}
 {{- if (and (eq .chezmoi.os "linux") (hasKey .chezmoi.osRelease "id")) -}}
@@ -41,13 +44,12 @@ pager = "less -R"
   use_secrets       = {{ $use_secrets }}
   hostname          = {{ $hostname | quote }}
   osid              = {{ $osID | quote }}
+  ephemeral         = {{ $ephemeral }}
+  headless          = {{ $headless }}
   xdgCacheDir       = "{{ .chezmoi.homeDir }}/.cache"
   xdgConfigDir      = "{{ .chezmoi.homeDir }}/.config"
   xdgDataDir        = "{{ .chezmoi.homeDir }}/.local/share"
   xdgStateDir       = "{{ .chezmoi.homeDir }}/.local/state"
-
-[edit]
-  apply = true
 
 [age]
   identity = "~/.config/chezmoi/key.txt"
@@ -60,8 +62,9 @@ pager = "less -R"
 
 {{ if lookPath "code" -}}
 [edit]
-    args    = ["-r", "--wait"]
-    command = "code"
+  args    = ["-r", "--wait"]
+  command = "code"
+  apply = true
 
 [merge]
     command = "bash"
@@ -69,4 +72,7 @@ pager = "less -R"
         "-c",
         "cp '{{ "{{" }} .Target {{ "}}" }}' '{{ "{{" }} .Target {{ "}}" }}.base' && code --new-window --wait --merge '{{ "{{" }} .Destination {{ "}}" }}' '{{ "{{" }} .Target {{ "}}" }}' '{{ "{{" }} .Target {{ "}}" }}.base' '{{ "{{" }} .Source {{ "}}" }}'",
     ]
+{{-   else -}}
+[edit]
+  apply = true
 {{ end -}}
