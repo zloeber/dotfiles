@@ -1,0 +1,38 @@
+Host github.com
+  hostname github.com
+  user git
+  identityfile ~/.ssh/github_id_rsa
+
+Host github.com
+  hostname github.com
+  user zloeber
+  identityfile ~/.ssh/github_id_rsa
+
+Host kubebox
+  user zloeber
+  identityfile ~/.ssh/github_id_rsa
+
+Host linbox4
+  hostname 192.168.1.158
+  user zloeber
+
+Host gitlab.com
+  PreferredAuthentications publickey
+  IdentityFile ~/.ssh/sram_rsa
+
+
+Host ssh.dev.azure.com
+  IdentityFile  ~/.ssh/ado-pub-key
+  IdentitiesOnly yes
+
+
+# Host ssh.dev.azure.com
+#   Hostname ssh.dev.azure.com
+#   User git
+#   IdentityFile ~/.ssh/ado_zacharyloeber_id_rsa
+
+#Host vs-ssh.visualstudio.com
+#  Hostname vs-ssh.visualstudio.com
+#  User git
+#  IdentityFile /home/zloeber/Sync/.ssh/cicd_id_rsa
+

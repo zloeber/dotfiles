@@ -38,4 +38,15 @@ rm-from-path() {
 [[ "$(uname -s)" = Darwin ]] && alias ctrlv='pbpaste'
 [[ "$(uname -s)" = Linux ]] && alias ctrlc='xclip -selection c'
 [[ "$(uname -s)" = Linux ]] && alias ctrlv='xclip -o'
-export ANDROID_HOME="${HOME}/Android/Sdk"
+
+if [ -f $HOME/gitlab_token.txt ]; then
+  export GITLAB_TOKEN=$(cat $HOME/gitlab_token.txt)
+fi
+
+if [ -f $HOME/.github_token ]; then
+  export GITHBU_TOKEN=$(cat $HOME/.github_token)
+  export GITHUB_PERSONAL_ACCESS_TOKEN=$(cat $HOME/.github_token)
+  export GH_TOKEN=$(cat $HOME/.github_token)
+fi 
+
+alias q='exit'

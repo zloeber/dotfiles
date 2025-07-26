@@ -79,25 +79,14 @@ fi
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f "${HOME}/.p10k.zsh" ]] || source "${HOME}/.p10k.zsh"
 
-# if [ -f $HOME/.profile ]; then
-#   source $HOME/.profile
-# fi
-
 autoload -Uz compinit
 compinit
 
 export HISTFILE="$HOME/.zsh_history"
-export PATH="/usr/local/sbin:$PATH"
-export CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-export HTTPLIB2_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
-export OPENSSL_CONF=/usr/local/etc/openssl@3/openssl.cnf
-export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+export PATH="/opt/homebrew/bin:/usr/local/sbin:$PATH"
 
 case ":$PATH:" in
   *":${HOME}/.local/bin:"*) ;;
   *) export PATH="$PATH:${HOME}/.local/bin" ;;
 esac
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

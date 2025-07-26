@@ -86,9 +86,9 @@
     google_app_cred         # google application credentials (https://cloud.google.com/docs/authentication/production)
     toolbox                 # toolbox name (https://github.com/containers/toolbox)
     context                 # user@hostname
-    nordvpn                 # nordvpn connection status, linux only (https://nordvpn.com/)
-    ranger                  # ranger shell (https://github.com/ranger/ranger)
-    yazi                    # yazi shell (https://github.com/sxyazi/yazi)
+    #nordvpn                 # nordvpn connection status, linux only (https://nordvpn.com/)
+    #ranger                  # ranger shell (https://github.com/ranger/ranger)
+    #yazi                    # yazi shell (https://github.com/sxyazi/yazi)
     nnn                     # nnn shell (https://github.com/jarun/nnn)
     lf                      # lf shell (https://github.com/gokcehan/lf)
     xplr                    # xplr shell (https://github.com/sayanarijit/xplr)
@@ -102,9 +102,9 @@
     # disk_usage            # disk usage
     # ram                   # free RAM
     # swap                  # used swap
-    todo                    # todo items (https://github.com/todotxt/todo.txt-cli)
-    timewarrior             # timewarrior tracking status (https://timewarrior.net/)
-    taskwarrior             # taskwarrior task count (https://taskwarrior.org/)
+    #todo                    # todo items (https://github.com/todotxt/todo.txt-cli)
+    #timewarrior             # timewarrior tracking status (https://timewarrior.net/)
+    #taskwarrior             # taskwarrior task count (https://taskwarrior.org/)
     per_directory_history   # Oh My Zsh per-directory-history local/global indicator
     # cpu_arch              # CPU architecture
     # time                  # current time

@@ -1,11 +1,24 @@
 [settings]
 experimental = true
+idiomatic_version_file_enable_tools = ["python"]
 
 [tools]
-go = "1.23.0"
-helm = "latest"
+go = "1.24.5"
 vendir = "latest"
-fzf = "0.44.0"
+fzf = "latest"
 node = "latest"
 chezmoi = "latest"
-btop = "latest"
+ollama = "latest"
+terraformer = "latest"
+mani = "latest"
+rust = "latest"
+"cargo:awsctx" = "latest"
+awscli = "latest"
+uv = "latest"
+python = "latest"
+glab = "latest"
+"npm:semantic-release" = "latest"
+"pipx:arsenal-cli" = "latest"
+"npm:@google/gemini-cli" = "latest"
+glow = "latest"
+fx = "latest"
