@@ -1,3 +1,10 @@
+# OPENSPEC:START
+# OpenSpec shell completions configuration
+fpath=("/Users/zacharyloeber/.zsh/completions" $fpath)
+autoload -Uz compinit
+compinit
+# OPENSPEC:END
+
 # load zgenom
 ZGENOM_DIR="${HOME}/.zgenom"
 
@@ -14,7 +21,7 @@ ZGENOM_RESET_ON_CHANGE=(
   ${ZDOTDIR:-$HOME}/.zshrc.local
 )
 
-eval "$(mise activate zsh)"
+eval "$($HOME/.local/bin/mise activate zsh)"
 
 export FZF_BASE=$(mise where fzf)
 
@@ -50,7 +57,7 @@ if ! zgenom saved; then
     zgenom load zsh-users/zsh-syntax-highlighting
     zgenom load unixorn/autoupdate-zgenom
     zgenom load lincheney/fzf-tab-completion
-
+7
     # completions
     zgenom load zsh-users/zsh-completions
     zgenom load zsh-users/zsh-autosuggestions
@@ -90,3 +97,18 @@ case ":$PATH:" in
   *) export PATH="$PATH:${HOME}/.local/bin" ;;
 esac
 
+
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+
+# Added by Antigravity
+export PATH="/Users/zacharyloeber/.antigravity/antigravity/bin:/Users/zacharyloeber/.bun/bin:$PATH"
+
+#. "$HOME/.langflow/uv/env"
+
+# pnpm
+export PNPM_HOME="/Users/zacharyloeber/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end

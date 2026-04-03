@@ -44,7 +44,7 @@ if [ -f $HOME/gitlab_token.txt ]; then
 fi
 
 if [ -f $HOME/.github_token ]; then
-  export GITHBU_TOKEN=$(cat $HOME/.github_token)
+  export GITHUB_TOKEN=$(cat $HOME/.github_token)
   export GITHUB_PERSONAL_ACCESS_TOKEN=$(cat $HOME/.github_token)
   export GH_TOKEN=$(cat $HOME/.github_token)
 fi 
