@@ -99,7 +99,7 @@ task save -- "tweak zshrc"   # commit + push
 ├── .chezmoiscripts/             # run_once bootstrap scripts (e.g. key decrypt)
 └── home/                        # the actual dotfiles (chezmoi source root)
     ├── .chezmoi.toml.tmpl       # generates ~/.config/chezmoi/chezmoi.toml
-    ├── dot_zshrc, dot_p10k.zsh, dot_gitconfig.tmpl, …
+    ├── dot_zshrc, dot_gitconfig.tmpl, …
     ├── dot_config/…             # ~/.config/* (mise, starship, waveterm, uv, …)
     ├── private_dot_ssh/…        # ~/.ssh (public keys + encrypted private keys)
     └── encrypted_*.age          # age-encrypted secrets

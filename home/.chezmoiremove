@@ -1,0 +1,2 @@
+# Files chezmoi should delete from the target on apply.
+.p10k.zsh

@@ -101,9 +101,6 @@ if command -v zgenom >/dev/null 2>&1 && ! zgenom saved; then
     zgenom load zsh-users/zsh-completions
     zgenom load zsh-users/zsh-autosuggestions
 
-    # theme
-    #zgenom load romkatv/powerlevel10k powerlevel10k
-
     # Custom task completion (only if present)
     [[ -f "${HOME}/_compdir/_task" ]] && zgenom load "${HOME}/_compdir/_task" --completion
 
@@ -117,15 +114,6 @@ fi
 # Source in customizations here
 [[ ! -f "${HOME}/.zshrc.local" ]] || source "${HOME}/.zshrc.local"
 
-# Enable Powerlevel10k instant prompt.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block, everything else may go below.
-# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-# fi
-
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-#[[ ! -f "${HOME}/.p10k.zsh" ]] || source "${HOME}/.p10k.zsh"
 autoload -Uz compinit
 compinit -d "${HOME}/.zcompdump"
 
