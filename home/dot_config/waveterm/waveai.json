@@ -1,0 +1,18 @@
+{
+  "ollama-llama": {
+    "display:name": "Ollama - gemma4:e4b",
+    "display:order": 1,
+    "display:icon": "microchip",
+    "display:description": "gemma4:e4b (ollama)",
+    "ai:apitype": "openai-chat",
+    "ai:model": "gemma4:e4b",
+    "ai:thinkinglevel": "medium",
+    "ai:endpoint": "http://linbox5:11434/v1/chat/completions",
+    "ai:apitoken": "ollama",
+    "ai:capabilities": [
+      "tools",
+      "images",
+      "pdfs"
+    ]
+  }
+}

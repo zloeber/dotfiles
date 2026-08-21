@@ -1,0 +1,19 @@
+{
+  "term:fontfamily": "Hack Nerd Font",
+  "autoupdate:channel": "latest",
+  "conn:askbeforewshinstall": false,
+  "telemetry:enabled": false,
+  "waveai:defaultmode": "ollama-llama",
+  "waveai:showcloudmodes": false,
+  "ollama-llama": {
+    "display:name": "Ollama - GLM 4.7-flash",
+    "display:order": 1,
+    "display:icon": "microchip",
+    "display:description": "GLM 4.7-flash (ollama)",
+    "ai:apitype": "openai-chat",
+    "ai:model": "glm-4.7-flash:latest",
+    "ai:thinkinglevel": "medium",
+    "ai:endpoint": "http://linbox5:11434/v1/chat/completions",
+    "ai:apitoken": "ollama"
+  }
+}

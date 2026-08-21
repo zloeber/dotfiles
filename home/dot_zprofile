@@ -1,1 +1,4 @@
 eval "$($HOME/.local/bin/mise activate zsh --shims)"
+
+# Hermes Agent — ensure ~/.local/bin is on PATH
+export PATH="$HOME/.local/bin:$PATH"

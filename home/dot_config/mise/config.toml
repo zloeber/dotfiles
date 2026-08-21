@@ -3,39 +3,61 @@ experimental = true
 idiomatic_version_file_enable_tools = ["python"]
 
 [tools]
-go = "1.26.1"
-vendir = "latest"
+go = "1.26.4"
 fzf = "latest"
-node = "latest"
+node = "22"
 chezmoi = "latest"
-#ollama = "latest"
 terraformer = "latest"
 rust = "latest"
-awscli = "latest"
 uv = "latest"
-python = "latest"
+python = "3.13"
 glab = "latest"
 "npm:semantic-release" = "latest"
 "npm:@google/gemini-cli" = "latest"
 glow = "latest"
 fx = "latest"
 npm = "latest"
-"pipx:copier" = "latest"
 task = "latest"
 "npm:mcp-searxng" = "latest"
 ansible = "latest"
-"pipx:marker-pdf" = { version = "latest", full = "" }
-ruby = "4.0.1"
-hatch = "latest"
+ruby = "4.0.5"
 ripgrep = "latest"
 usage = "latest"
 dive = "latest"
 pnpm = "latest"
-"ubi:docker/cagent" = "latest"
-"github:RightNow-AI/openfang" = "latest"
-colima = "latest"
+"github:docker/cagent" = "latest"
 helm = "latest"
-age = "1.2.1"
-delta = "0.18.2"
-#"ubi:fleetdm/fleet" = { version = "latest", exe = "fleetctl" }
-#"go:github.com/charmbracelet/crush" = "latest"
+age = "latest"
+delta = "latest"
+colima = "latest"
+java = "temurin-17"
+kotlin = { version = "latest", asset_pattern = "kotlin-compiler-*.zip", bin_path = "kotlinc/bin" }
+"pipx:copier" = "9.16.0"
+gh = "latest"
+terraform = "1.14.8"
+tflint = "0.63.1"
+tirith = "0.3.2"
+opencode = "latest"
+starship = "latest"
+"npm:skills" = "1.5.11"
+yq = "latest"
+"cargo:croft" = "latest"
+azure = { version = "latest", uvx_args = "--prerelease=allow" }
+awscli = { version = "latest", symlink_bins = "true" }
+"pipx:cheznav" = "latest"
+"cargo:clin-rs" = "latest"
+"npm:latest" = "latest"
+"npm:@tobilu/qmd" = "2.5.3"
+tfsec = "1.28.14"
+"github:zloeber/pinner" = "0.6.0"
+"github:kenn-io/agentsview" = "latest"
+
+#[tools."http:devtunnel"]
+#version = "1.0.1972+07cc55c789"
+#bin = "devtunnel"
+
+#[tools."http:devtunnel".platforms]
+#macos-arm64 = { url = "https://tunnelsassetsprod.blob.core.windows.net/cli/1.0.1972+07cc55c789/osx-arm64-devtunnel" }
+#macos-x64   = { url = "https://tunnelsassetsprod.blob.core.windows.net/cli/1.0.1972+07cc55c789/osx-x64-devtunnel" }
+#linux-arm64 = { url = "https://tunnelsassetsprod.blob.core.windows.net/cli/1.0.1972+07cc55c789/linux-arm64-devtunnel" }
+#linux-x64   = { url = "https://tunnelsassetsprod.blob.core.windows.net/cli/1.0.1972+07cc55c789/linux-x64-devtunnel" }

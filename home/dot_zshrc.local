@@ -47,6 +47,14 @@ if [ -f $HOME/.github_token ]; then
   export GITHUB_TOKEN=$(cat $HOME/.github_token)
   export GITHUB_PERSONAL_ACCESS_TOKEN=$(cat $HOME/.github_token)
   export GH_TOKEN=$(cat $HOME/.github_token)
-fi 
+fi
+
+set -a # automatically export all variables
+if [ -f ~/.env ]; then
+    source ~/.env 2>/dev/null
+fi
+set +a
 
 alias q='exit'
+
+#eval "$(tirith init --shell zsh)"

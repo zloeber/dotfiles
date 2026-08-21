@@ -1,32 +1,71 @@
-# OPENSPEC:START
-# OpenSpec shell completions configuration
-fpath=("/Users/zacharyloeber/.zsh/completions" $fpath)
-autoload -Uz compinit
-compinit
-# OPENSPEC:END
+# ~/.zshrc — cross-platform (macOS + Linux), portable via $HOME, and tolerant
+# of missing binaries (mise, starship, brew, git, …) so a fresh machine still
+# boots into a usable shell.
 
-# load zgenom
+# ---------------------------------------------------------------------------
+# Homebrew (macOS Apple Silicon / Intel, or Linuxbrew). Loaded early so that
+# brew-installed tools (mise, starship, git) are on PATH for the rest of this
+# file. First match wins; missing brew is silently skipped.
+# ---------------------------------------------------------------------------
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew \
+             /home/linuxbrew/.linuxbrew/bin/brew "$HOME/.linuxbrew/bin/brew"; do
+  if [[ -x "$_brew" ]]; then
+    eval "$("$_brew" shellenv)"
+    break
+  fi
+done
+unset _brew
+
+# ---------------------------------------------------------------------------
+# zgenom plugin manager (bootstrap the clone only if git is available)
+# ---------------------------------------------------------------------------
 ZGENOM_DIR="${HOME}/.zgenom"
 
-[[ -d "$ZGENOM_DIR" ]] || git clone https://github.com/jandamm/zgenom.git --depth=1 "$ZGENOM_DIR"
+if [[ ! -d "$ZGENOM_DIR" ]]; then
+  if command -v git >/dev/null 2>&1; then
+    git clone https://github.com/jandamm/zgenom.git --depth=1 "$ZGENOM_DIR"
+  else
+    echo "zshrc: git not found; skipping zgenom bootstrap" >&2
+  fi
+fi
 
-source "$ZGENOM_DIR/zgenom.zsh"
+if [[ -f "$ZGENOM_DIR/zgenom.zsh" ]]; then
+  source "$ZGENOM_DIR/zgenom.zsh"
 
-# Check for plugin and zgenom updates every 7 days
-# This does not increase the startup time.
-zgenom autoupdate
+  # Check for plugin and zgenom updates every 7 days (no startup cost).
+  zgenom autoupdate
 
-ZGENOM_RESET_ON_CHANGE=(
-  ${ZDOTDIR:-$HOME}/.zshrc
-  ${ZDOTDIR:-$HOME}/.zshrc.local
-)
+  ZGENOM_RESET_ON_CHANGE=(
+    ${ZDOTDIR:-$HOME}/.zshrc
+    ${ZDOTDIR:-$HOME}/.zshrc.local
+  )
+fi
 
-eval "$($HOME/.local/bin/mise activate zsh)"
+# ---------------------------------------------------------------------------
+# mise (runtime/tool manager) — activate only if installed. Prefer a mise on
+# PATH (e.g. brew), then fall back to the default per-user install location,
+# which is identical on macOS and Linux.
+# ---------------------------------------------------------------------------
+if command -v mise >/dev/null 2>&1; then
+  MISE_BIN="$(command -v mise)"
+elif [[ -x "$HOME/.local/bin/mise" ]]; then
+  MISE_BIN="$HOME/.local/bin/mise"
+fi
 
-export FZF_BASE=$(mise where fzf)
+if [[ -n "${MISE_BIN:-}" ]]; then
+  eval "$("$MISE_BIN" activate zsh)"
 
-# if the init scipt doesn't exist then get to it!
-if ! zgenom saved; then
+  # Point fzf at its mise-managed install, but only if fzf is managed by mise.
+  if _fzf_base="$("$MISE_BIN" where fzf 2>/dev/null)"; then
+    export FZF_BASE="$_fzf_base"
+  fi
+  unset _fzf_base
+fi
+
+# ---------------------------------------------------------------------------
+# One-time plugin definition + save (skipped entirely if zgenom is unavailable)
+# ---------------------------------------------------------------------------
+if command -v zgenom >/dev/null 2>&1 && ! zgenom saved; then
     echo "Creating a zgenom save"
 
     zgenom oh-my-zsh
@@ -39,10 +78,10 @@ if ! zgenom saved; then
     zgenom oh-my-zsh plugins/aws
     zgenom oh-my-zsh plugins/fzf
     zgenom oh-my-zsh plugins/vault
-    
+
     ## These two like to fork up my path for whatever reason (jerks)
     #zgenom oh-my-zsh plugins/direnv
-    
+
     zgenom oh-my-zsh plugins/command-not-found
     zgenom oh-my-zsh plugins/helm
     zgenom oh-my-zsh plugins/kubectl
@@ -50,21 +89,23 @@ if ! zgenom saved; then
     zgenom oh-my-zsh plugins/history
     zgenom oh-my-zsh plugins/ssh-agent
 
-    # Install ohmyzsh osx plugin if on macOS
+    # Install ohmyzsh macos plugin only on macOS
     [[ "$(uname -s)" = Darwin ]] && zgenom ohmyzsh plugins/macos
 
     zgenom load zsh-users/zsh-history-substring-search
     zgenom load zsh-users/zsh-syntax-highlighting
     zgenom load unixorn/autoupdate-zgenom
     zgenom load lincheney/fzf-tab-completion
-7
+
     # completions
     zgenom load zsh-users/zsh-completions
     zgenom load zsh-users/zsh-autosuggestions
 
     # theme
-    zgenom load romkatv/powerlevel10k powerlevel10k
-    zgenom load "${HOME}/_compdir/_task" --completion
+    #zgenom load romkatv/powerlevel10k powerlevel10k
+
+    # Custom task completion (only if present)
+    [[ -f "${HOME}/_compdir/_task" ]] && zgenom load "${HOME}/_compdir/_task" --completion
 
     # save all to init script
     zgenom save
@@ -74,41 +115,79 @@ if ! zgenom saved; then
 fi
 
 # Source in customizations here
-[[ ! -f "${HOME}/.zshrc.local" ]] || source ${HOME}/.zshrc.local
+[[ ! -f "${HOME}/.zshrc.local" ]] || source "${HOME}/.zshrc.local"
 
 # Enable Powerlevel10k instant prompt.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block, everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
+# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+#   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# fi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f "${HOME}/.p10k.zsh" ]] || source "${HOME}/.p10k.zsh"
-
+#[[ ! -f "${HOME}/.p10k.zsh" ]] || source "${HOME}/.p10k.zsh"
 autoload -Uz compinit
-compinit
+compinit -d "${HOME}/.zcompdump"
 
 export HISTFILE="$HOME/.zsh_history"
-export PATH="/opt/homebrew/bin:/usr/local/sbin:$PATH"
 
+# Ensure ~/.local/bin is on PATH (same location on macOS and Linux)
 case ":$PATH:" in
   *":${HOME}/.local/bin:"*) ;;
   *) export PATH="$PATH:${HOME}/.local/bin" ;;
 esac
 
-
-[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
+# VS Code shell integration — only inside VS Code and only if `code` is present
+if [[ "$TERM_PROGRAM" == "vscode" ]] && command -v code >/dev/null 2>&1; then
+  . "$(code --locate-shell-integration-path zsh)"
+fi
 
 # Added by Antigravity
-export PATH="/Users/zacharyloeber/.antigravity/antigravity/bin:/Users/zacharyloeber/.bun/bin:$PATH"
+#export PATH="$HOME/.antigravity/antigravity/bin:$HOME/.bun/bin:$PATH"
 
-#. "$HOME/.langflow/uv/env"
-
-# pnpm
-export PNPM_HOME="/Users/zacharyloeber/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
+# ---------------------------------------------------------------------------
+# pnpm — data dir differs by platform; only prepend to PATH if it exists.
+# ---------------------------------------------------------------------------
+if [[ "$(uname -s)" == Darwin ]]; then
+  export PNPM_HOME="$HOME/Library/pnpm"
+else
+  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+fi
+if [[ -d "$PNPM_HOME" ]]; then
+  case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+  esac
+fi
 # pnpm end
+
+# ---------------------------------------------------------------------------
+# Starship prompt — only if installed.
+# ---------------------------------------------------------------------------
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
+
+# ---------------------------------------------------------------------------
+# zsh-syntax-highlighting MUST be sourced last so it wraps every ZLE widget,
+# including anything added by starship above. zgenom clones/updates the plugin;
+# we (re)source it here to guarantee it is the final ZLE consumer. The glob
+# tolerates a missing plugin (fresh machine / git absent).
+# ---------------------------------------------------------------------------
+_zsh_hl=("$ZGENOM_DIR"/sources/zsh-users/zsh-syntax-highlighting/*/zsh-syntax-highlighting.zsh(N))
+[[ -n "${_zsh_hl[1]:-}" ]] && source "${_zsh_hl[1]}"
+unset _zsh_hl
+
+# >>> open-knowledge cli >>>
+# ! Contents within this block are managed by OpenKnowledge. Do not edit.
+# ! Delete this whole block to opt out — OpenKnowledge will not re-add it.
+#[ -f "$HOME/.ok/env.sh" ] && . "$HOME/.ok/env.sh"
+# <<< open-knowledge cli <<<
+
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+if [[ -d "$HOME/.docker/completions" ]]; then
+  fpath=("$HOME/.docker/completions" $fpath)
+  autoload -Uz compinit
+  compinit
+fi
+# End of Docker CLI completions

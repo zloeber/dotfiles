@@ -1,3 +1,5 @@
+Include /Users/zacharyloeber/.colima/ssh_config
+
 Host botbox
   user openclaw
   hostname 192.168.1.125
@@ -33,3 +35,17 @@ Host gitlab.com
 Host ssh.dev.azure.com
   IdentityFile  ~/.ssh/ado-pub-key
   IdentitiesOnly yes
+
+
+# Host ssh.dev.azure.com
+#   Hostname ssh.dev.azure.com
+#   User git
+#   IdentityFile ~/.ssh/ado_zacharyloeber_id_rsa
+
+#Host vs-ssh.visualstudio.com
+#  Hostname vs-ssh.visualstudio.com
+#  User git
+#  IdentityFile /home/zloeber/Sync/.ssh/cicd_id_rsa
+
+Host i-* mi-*
+  ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"

@@ -1,0 +1,23 @@
+{
+  "openclaw@botbox": {
+    "conn:wshenabled": true
+  },
+  "zloeber@192.168.1.204": {
+    "conn:wshenabled": true
+  },
+  "zloeber@basementbox.home.loeber.live": {
+    "conn:wshenabled": true
+  },
+  "zloeber@botbox": {
+    "conn:wshenabled": true
+  },
+  "zloeber@linbox4": {
+    "conn:wshenabled": true
+  },
+  "zloeber@linbox5": {
+    "conn:wshenabled": true
+  },
+  "zloeber@linux-laptop": {
+    "conn:wshenabled": true
+  }
+}
