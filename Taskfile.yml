@@ -1,27 +1,22 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
+#
+# Taskfile for this chezmoi-backed dotfiles repo.
+# Run `task` (no arguments) to list every available command.
+#
+# Most tasks accept extra chezmoi arguments after `--`, e.g.:
+#   task diff -- ~/.zshrc
+#   task edit -- ~/.config/mise/config.toml
+#   task add  -- ~/.config/newtool/config.yml
 
 version: "3"
 silent: true
-env:
-  PROJECT:
-    sh: 'echo "$(basename $(pwd))" | tr "[:upper:]" "[:lower:]"'
-  LOCAL_BIN_PATH:
-    sh: 'echo "{{.ROOT_DIR}}/.venv/bin"'
-  BUILD_DATE:
-    sh: "date '+%Y-%m-%d-%H:%M:%S'"
-  BUILD_DATE_SHORT:
-    sh: "date '+%Y-%m-%d-%H%M%S'"
-  GIT_LATEST_TAG:
-    sh: 'git tag -l 2>/dev/null | sort -r -V | head -n 1 2>/dev/null || echo "not a git repo"'
-  TERM: screen-256color
-  DOCS_PATH: "{{.ROOT_DIR}}/docs"
-  PYTHON_VENV_PATH: "{{.ROOT_DIR}}/.venv"
-  SCRIPT_PATH: "{{.ROOT_DIR}}/scripts"
-  VERSION: '{{default "unknown" .GIT_LATEST_TAG}}'
-  COMPOSE_BAKE: true
 
-dotenv:
-  - ".env"
+vars:
+  # Tools that must be present for this repo to work end to end.
+  REQUIRED_BINS: "git mise chezmoi age delta task"
+  # Cross-platform "open" (macOS: open, Linux: xdg-open).
+  OPEN:
+    sh: 'if [ "{{OS}}" = "darwin" ]; then echo open; else echo xdg-open; fi'
 
 includes:
   github:
@@ -31,202 +26,144 @@ includes:
 tasks:
   default:
     cmds:
-      - |
-        task -l
+      - task -l --sort none
 
-  show:
-    desc: Show task variables
+  # ---------------------------------------------------------------------
+  # Setup
+  # ---------------------------------------------------------------------
+  bootstrap:
+    desc: "Fresh-machine setup: install mise + required tools, then run doctor"
+    cmds:
+      - ./configure.sh
+      - task: doctor
+
+  deps:
+    desc: Install/update the tool versions pinned in mise.toml
+    cmds:
+      - mise install -y
+
+  doctor:
+    desc: Verify required binaries are present and run `chezmoi doctor`
     cmds:
       - |
-        echo "ROOT_PATH: {{.ROOT_DIR}}"
-        echo "PROJECT: {{.PROJECT}}"
-        echo "VERSION: {{.VERSION}}"
-        echo "OS: {{OS}}"
-        echo "ARCH: {{ARCH}}"
-        echo "LOCAL_BIN_PATH: {{.LOCAL_BIN_PATH}}"
-        echo "PYTHON_VENV_PATH: {{.PYTHON_VENV_PATH}}"
-        echo "SCRIPT_PATH: {{.SCRIPT_PATH}}"
-        echo "BUILD_DATE: {{.BUILD_DATE}}"
-        echo "GIT_LATEST_TAG: {{.GIT_LATEST_TAG}}"
-
-  show:all:
-    desc: Show all variables for task namespaces
-    cmds:
-      - |
-        echo "## Show ##";
-        task show
-        echo ""
-        for taskitem in $(task -l | cut -d " " -f2 | grep show | sed 's/.$//'); do
-          if [[ "$taskitem" != "show:all" ]]; then
-            echo "## Show - ${taskitem} ##";
-            task $taskitem;
-            echo "";
+        echo "==> Required binaries"
+        missing=0
+        for bin in {{.REQUIRED_BINS}}; do
+          if command -v "$bin" >/dev/null 2>&1; then
+            printf '  [ok]      %-9s %s\n' "$bin" "$(command -v "$bin")"
+          else
+            printf '  [MISSING] %-9s\n' "$bin"
+            missing=1
           fi
         done
-
-  list:
-    desc: List tasks by namespace (task list -- <namespace>)
-    cmds:
-      - |
-        if [[ "{{.CLI_ARGS}}" != "" ]]; then
-          task -l | grep {{default "" .CLI_ARGS}}
-        else
-          task -l
+        if [ "$missing" -ne 0 ]; then
+          echo
+          echo "  -> Install missing tools with: task bootstrap  (or: mise install)"
+        fi
+        echo
+        if command -v chezmoi >/dev/null 2>&1; then
+          echo "==> chezmoi doctor"
+          chezmoi doctor || true
         fi
 
-  secrets:
-    desc: Create .env file if one does not already exist.
+  # ---------------------------------------------------------------------
+  # Everyday chezmoi operations
+  # ---------------------------------------------------------------------
+  diff:
+    desc: "Show what `chezmoi apply` would change (task diff -- [target])"
     cmds:
-      - cp ./.env.EXAMPLE ./.env
-    status:
-      - "test -f .env"
+      - chezmoi diff {{.CLI_ARGS}}
 
-  autocomplete:
-    desc: Setup task autocomplete (zsh)
+  status:
+    desc: Show which managed targets differ from the source
     cmds:
-      - sudo curl https://raw.githubusercontent.com/go-task/task/main/completion/zsh/_task \
-        -o /usr/local/share/zsh/site-functions/_task
+      - chezmoi status
+
+  apply:
+    desc: "Apply the source to your home directory (task apply -- [target])"
+    cmds:
+      - chezmoi apply --verbose {{.CLI_ARGS}}
+
+  update:
+    desc: "Capture live edits from $HOME back into the source (chezmoi re-add)"
+    cmds:
+      - chezmoi re-add {{.CLI_ARGS}}
+
+  edit:
+    desc: "Edit a managed file via chezmoi (task edit -- ~/.zshrc)"
+    cmds:
+      - chezmoi edit {{.CLI_ARGS}}
+
+  add:
+    desc: "Start managing a new file (task add -- ~/.config/foo/bar.toml)"
+    cmds:
+      - chezmoi add {{.CLI_ARGS}}
+
+  cd:
+    desc: "Print the chezmoi source path (use: cd \"$(task cd)\")"
+    cmds:
+      - chezmoi source-path
+
+  # ---------------------------------------------------------------------
+  # Syncing with git
+  # ---------------------------------------------------------------------
+  pull:
+    desc: Pull the latest source from git and apply it (chezmoi update)
+    cmds:
+      - chezmoi update {{.CLI_ARGS}}
+
+  save:
+    desc: "Commit & push source changes to git (task save -- \"commit message\")"
+    cmds:
+      - |
+        msg="{{.CLI_ARGS}}"
+        [ -n "$msg" ] || msg="chore: update dotfiles"
+        git add -A
+        if git diff --cached --quiet; then
+          echo "Nothing to commit."
+        else
+          git commit -m "$msg"
+        fi
+        git push
+
+  # ---------------------------------------------------------------------
+  # Secrets / age key
+  # ---------------------------------------------------------------------
+  key:decrypt:
+    desc: Decrypt the chezmoi age identity into ~/.config/chezmoi/key.txt
+    cmds:
+      - |
+        mkdir -p "$HOME/.config/chezmoi"
+        chezmoi age decrypt \
+          --output "$HOME/.config/chezmoi/key.txt" \
+          --passphrase "$(chezmoi source-path)/key.txt.age"
+        chmod 600 "$HOME/.config/chezmoi/key.txt"
+        echo "Wrote $HOME/.config/chezmoi/key.txt"
     status:
-      - "test -f /usr/local/share/zsh/site-functions/_task"
+      - test -f "$HOME/.config/chezmoi/key.txt"
 
   secret:search:
-    desc: Find secrets in the codebase and in git history
+    desc: Scan the repo (and git history) for leaked secrets with gitleaks
+    cmds:
+      - gitleaks detect --source ./ -f json -r secret_results.json
+
+  # ---------------------------------------------------------------------
+  # Housekeeping
+  # ---------------------------------------------------------------------
+  show:
+    desc: Show environment / chezmoi paths
     cmds:
       - |
-        gitleaks detect --source ./ -f json -r secret_results.json
-
-  start:mcp:inspector:
-    desc: Start MCP Inspector (thv)
-    cmds:
-      - npx -y @modelcontextprotocol/inspector --transport http --server-url http://localhost:3000/mcp
-    env:
-      DANGEROUSLY_OMIT_AUTH: true
+        echo "OS:           {{OS}}"
+        echo "ARCH:         {{ARCH}}"
+        echo "ROOT_DIR:     {{.ROOT_DIR}}"
+        echo "OPEN:         {{.OPEN}}"
+        if command -v chezmoi >/dev/null 2>&1; then
+          echo "SOURCE_PATH:  $(chezmoi source-path 2>/dev/null)"
+        fi
 
   clean:
-    desc: Clean the project
+    desc: Remove local scratch files (.DS_Store, secret scan output)
     cmds:
-      - |
-        find . -type d -name "__pycache__" -exec rm -rf {} +
-        find . -type d -name "*.egg-info" -exec rm -rf {} +
-        find . -type f -name ".DS_Store" -delete
-        find . -type f -name "*.pyc" -delete
-        find . -type f -name "*.pyo" -delete
-        rm -rf .mypy_cache
-        rm -rf .pytest_cache
-        rm -rf .ruff_cache
-        rm -rf dist
-        rm -rf .coverage
-        rm -rf .coverage.*
-        rm -rf .coverage.xml
-        rm -rf .DS_Store
-        rm -rf .pytest_cache
-        rm -rf .venv
-        rm -rf src/terraform_ingest/_version.py
-        rm -rf chromadb
-        rm -rf ./output
-        rm -rf ./repos
-        rm -rf ./site
-
-  start:backend:api:
-    desc: Start the backend API service using Docker Compose
-    cmds:
-      - |
-        docker compose -f backend/api/docker-compose.yaml up -d --build promptlib-api
-
-  test:roles:
-    desc: Validate role schemas
-    cmds:
-      - |
-        echo "Validating role schemas..."
-        uv run {{.ROOT_DIR}}/scripts/validate-roles validate-all -v
-
-  deep:clean:
-    desc: Clean the project deeply. Includes uv cache removal.
-    cmds:
-      - uv cache clean
-      - task: clean
-
-  repomix:
-    desc: Run the repo mixin
-    cmds:
-      - |
-        repomix --style=markdown --output=docs/repomix.md --compress
-
-  build:image:
-    desc: Build Docker images
-    cmds:
-      - task: docker:build
-        vars:
-          DOCKER_BUILD_ARGS: "--build-arg DEPLOY_VERSION={{.VERSION}}-$(git rev-parse --short HEAD)"
-
-  mcp:inspector:
-    desc: Start MCP Inspector
-    cmds:
-      - npx -y @modelcontextprotocol/inspector
-    env:
-      DANGEROUSLY_OMIT_AUTH: true
-
-  update:github:actions:
-    desc: Update GitHub Actions in workflows
-    cmds:
-      - npx actions-up -y
-  
-  mcp:scan:
-    desc: Scan MCP package for issues
-    env:
-      MCP_SCANNER_LLM_API_KEY: test
-      MCP_SCANNER_API_KEY: test
-      MCP_SCANNER_LLM_ENDPOINT: http://192.168.1.204:11434
-      MCP_SCANNER_LLM_MODEL: gemma3:12b
-    cmds:
-      - |
-        uv tool install cisco-ai-mcp-scanner
-        uv tool upgrade cisco-ai-mcp-scanner
-        mcp-scanner --format summary \
-          --stdio-command uvx \
-          --stdio-arg=pl-cli --stdio-arg=mcp --stdio-arg=-c --stdio-arg=config.yaml \
-          --stdio-arg=--no-ingest-on-startup \
-          --format table \
-          --analyzers yara \
-          -o security_scan_results.md
-    
-  db:init:
-    desc: Initialize the database
-    cmds:
-      - |
-        echo "Initializing database..."
-        cd ./backend/api
-        uv pip install -e .[dev]
-        uv run python promptlib_api/db/init_db.py
-        curl -X POST "http://localhost:8000/api/v1/auth/register" \
-          -H "Content-Type: application/json" \
-          -d '{"username":"admin","email":"admin@example.com","password":"password1"}'
-  
-  start:
-    desc: Start the application stack using Docker Compose
-    cmds:
-      - docker compose up -d --build
-      - open http://localhost
-
-  start:dev:
-    desc: Start Postgres, API (hot reload), and Vite dev server (docker-compose.dev.yaml)
-    cmds:
-      - docker compose -f docker-compose.dev.yaml up -d --build
-      - open http://localhost:3000
-
-  stop:dev:
-    desc: Stop the development stack
-    cmds:
-      - docker compose -f docker-compose.dev.yaml down --remove-orphans
-
-  run:cli:
-    desc: Run the CLI tool
-    cmds:
-      - |
-        uv run promptlib
-  
-  reset:user:password:
-    desc: Reset the user password
-    cmds:
-      - |
-        uv run promptlib user reset-password --api http://localhost:8000
+      - find . -type f -name ".DS_Store" -delete
+      - rm -f secret_results.json

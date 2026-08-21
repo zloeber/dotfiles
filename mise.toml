@@ -1,4 +1,13 @@
 [tools]
-age = "latest"
-chezmoi = "latest"
-delta = "latest"
+# Core tools required to bootstrap and operate this dotfiles repo.
+age = "latest"       # encryption for secrets managed by chezmoi
+chezmoi = "latest"   # the dotfiles manager itself
+# delta: use the github backend (prebuilt release binaries). The default
+# aqua-backed `delta` installs but fails to expose its bin on PATH in current
+# mise, which silently breaks `chezmoi diff`.
+"github:dandavison/delta" = "latest"  # pretty diffs (chezmoi's configured diff pager)
+task = "latest"      # go-task, runs this repo's Taskfile
+
+# Convenience tools referenced by the dotfiles / Taskfile.
+starship = "latest"  # prompt used by dot_zshrc
+gitleaks = "latest"  # used by `task secret:search`

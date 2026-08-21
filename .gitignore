@@ -1,0 +1,4 @@
+# Local scratch / never commit
+.DS_Store
+.env
+secret_results.json

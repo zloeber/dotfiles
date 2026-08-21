@@ -28,7 +28,9 @@ pnpm = "latest"
 "github:docker/cagent" = "latest"
 helm = "latest"
 age = "latest"
-delta = "latest"
+# github backend: the default aqua-backed `delta` installs but doesn't expose
+# its bin on PATH in current mise, which silently breaks `chezmoi diff`.
+"github:dandavison/delta" = "latest"
 colima = "latest"
 java = "temurin-17"
 kotlin = { version = "latest", asset_pattern = "kotlin-compiler-*.zip", bin_path = "kotlinc/bin" }
