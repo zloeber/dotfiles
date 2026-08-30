@@ -62,6 +62,18 @@ Run `task` for the full list. The common ones:
 Most file-scoped tasks accept a target after `--`, e.g.
 `task diff -- ~/.config/mise/config.toml`.
 
+macOS-only helpers (the `mac:` namespace, see below):
+
+| Command | What it does |
+| --- | --- |
+| `task mac:dump` | Regenerate the Brewfile from the live system into the source |
+| `task mac:bundle` | Install everything in the Brewfile now (`brew bundle`) |
+| `task mac:wallpaper:backup` | Capture the current desktop picture into the source |
+| `task mac:wallpaper:set` | Set the wallpaper to the committed image now |
+| `task mac:defaults` | Apply the curated macOS `defaults` immediately |
+| `task mac:backup-identity` | Archive keys/tokens/creds into an age-encrypted file |
+| `task mac:decommission` | Preview wiping your identity from this Mac (dry run) |
+
 ### Typical loop
 
 ```bash
@@ -70,6 +82,98 @@ task update -- ~/.zshrc      # pull live edits into the source
 task diff                    # sanity-check
 task save -- "tweak zshrc"   # commit + push
 ```
+
+## macOS system transfer (Mac → Mac)
+
+Beyond config files, this repo can bring a fresh Mac to parity with an existing
+one: the Homebrew install base, fonts, wallpaper, and system preferences. These
+pieces are **macOS-only** — the scripts self-gate on OS and the data files are
+ignored off macOS, so Linux/containers are unaffected.
+
+Everything is driven by `chezmoi apply` (the scripts under
+`home/.chezmoiscripts/` run automatically), or on demand via the `mac:` tasks.
+
+- **Brewfile** (`~/.config/homebrew/Brewfile`) — the declarative install base:
+  formulae, casks, fonts, and any `vscode`/`npm`/`uv` globals captured by
+  `brew bundle dump`. On `chezmoi apply`, `run_onchange_after_10-homebrew`
+  installs Homebrew if missing and runs `brew bundle`. It only re-runs when the
+  Brewfile changes (its hash is embedded in the script). Refresh the Brewfile
+  from your current machine with `task mac:dump`.
+- **Fonts** — managed as `font-*-nerd-font` casks inside the Brewfile (e.g.
+  `font-hack-nerd-font`). No separate downloader to maintain.
+- **Wallpaper** — the image lives in the repo at `~/.config/wallpaper/current.png`
+  and is set with [`desktoppr`](https://github.com/scriptingosx/desktoppr) (a
+  cask in the Brewfile). `run_onchange_after_30-wallpaper` re-applies only when
+  the image changes. Capture your current wallpaper with
+  `task mac:wallpaper:backup`, set it now with `task mac:wallpaper:set`.
+- **System defaults** — `run_onchange_after_20-macos-defaults` applies a
+  curated, well-commented set of `defaults write` tweaks (Finder, keyboard,
+  screenshots, Dock, trackpad, save panels) and restarts the affected apps.
+  Trim/extend the script freely; bump its `defaults version:` comment to force a
+  re-run. Apply immediately with `task mac:defaults`.
+
+> First-run ordering: on a brand-new Mac the wallpaper script may run before
+> `brew bundle` has installed `desktoppr` — it just warns and skips. A second
+> `chezmoi apply` (or `task mac:wallpaper:set`) sets it once `desktoppr` exists.
+
+### Migrating to a new Mac, then decommissioning the old one
+
+The two scripts at the repo root are a pair — **back up first, wipe second:**
+
+```bash
+# 1. On the OLD Mac: capture the secrets that don't live in this git repo
+#    (age key, SSH/GPG keys, cloud/dev/AI credentials) into ONE encrypted file.
+task mac:backup-identity -- --list      # preview what will be included
+task mac:backup-identity                # create ~/identity-backup-<host>-<date>.tar.age
+
+# 2. Move that archive off the Mac, then on the NEW Mac restore it:
+age -d identity-backup-*.tar.age | tar -xzf - -C "$HOME"
+
+# 3. Back on the OLD Mac, wipe your identity:
+task mac:decommission                   # dry run
+./decommission.sh --execute             # real wipe
+```
+
+`backup-identity.sh` is passphrase-encrypted by default (your age key is *in*
+the archive, so encrypting to that key would lock you out). It is read-only with
+respect to your system and refuses to write the archive into this git repo.
+Your dotfiles/config aren't included — they're already reproducible from
+chezmoi; only the non-reproducible secrets are captured. See
+`./backup-identity.sh --help`.
+
+> On the new Mac: it's provisioned fresh and MDM-enrolled by IT, so this repo +
+> the restored identity archive rebuild *your* layer on top — not the corporate
+> baseline. If the old machine is MDM-managed, coordinate the hand-back with IT
+> (Activation Lock / DEP release) rather than relying on a local wipe alone.
+
+### Decommissioning (identity wipe)
+
+When you're finalizing/handing off a Mac, `decommission.sh` (repo root) quits
+apps, gracefully stops Syncthing and removes its synced folders, then deletes
+private keys, tokens, cloud credentials, and browser/app profiles (logging you
+out of Firefox, Edge, Brave, Chrome, Safari, Signal, Teams, Slack, VS Code,
+Cursor, Docker, …).
+
+Syncthing is handled carefully: it's shut down via its REST API (then brew
+service / launchd / signal) so it isn't mid-write, and the synced folder paths
+are discovered from its `config.xml` *before* that config is deleted. Paths
+like `/`, `$HOME`, or non-absolute entries are refused as a safety guard.
+
+It is **dry-run by default** — it only prints what it would delete. It deletes
+nothing until you pass `--execute` *and* type a confirmation phrase.
+
+```bash
+task mac:decommission                 # dry run — review the plan
+./decommission.sh --verbose           # dry run, also list absent paths
+./decommission.sh --execute           # real wipe (prompts to confirm)
+./decommission.sh --execute --reset-keychain --remove-dotfiles   # nuke-everything
+task mac:decommission -- --execute    # same, via task
+```
+
+The script is repo-only (never deployed into `$HOME`) and prints a manual
+checklist at the end for the steps it deliberately won't automate — revoking
+tokens server-side, signing out of Apple ID / Find My, and the final "Erase All
+Content and Settings". See `./decommission.sh --help`.
 
 ## Cross-platform notes
 
@@ -94,13 +198,19 @@ task save -- "tweak zshrc"   # commit + push
 ├── mise.toml                    # tool versions for this repo
 ├── Taskfile.yml                 # dotfiles management commands (task -l)
 ├── tasks/Taskfile.github.yml    # optional GitHub helper tasks
+├── tasks/Taskfile.mac.yml       # optional macOS helpers (brew/wallpaper/defaults)
 ├── .chezmoiroot                 # points chezmoi at ./home
-├── .chezmoiignore               # files chezmoi should not manage
-├── .chezmoiscripts/             # run_once bootstrap scripts (e.g. key decrypt)
 └── home/                        # the actual dotfiles (chezmoi source root)
     ├── .chezmoi.toml.tmpl       # generates ~/.config/chezmoi/chezmoi.toml
+    ├── .chezmoiignore           # skips macOS-only assets off macOS
+    ├── .chezmoiscripts/         # run_onchange scripts (macOS: brew, defaults, wallpaper)
     ├── dot_zshrc, dot_gitconfig.tmpl, …
-    ├── dot_config/…             # ~/.config/* (mise, starship, waveterm, uv, …)
+    ├── dot_config/…             # ~/.config/* (mise, starship, waveterm, uv, homebrew, wallpaper, …)
     ├── private_dot_ssh/…        # ~/.ssh (public keys + encrypted private keys)
     └── encrypted_*.age          # age-encrypted secrets
 ```
+
+> Note: chezmoi's source root is `home/` (`.chezmoiroot`), so the operative
+> `.chezmoiignore` and `.chezmoiscripts/` live **inside** `home/`. The
+> like-named entries at the repo root are repo-management artifacts and are not
+> read by `chezmoi apply`.

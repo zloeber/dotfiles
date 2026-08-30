@@ -1,0 +1,78 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/usr/bin/env bash
+#
+# Curated, low-risk macOS system preferences. macOS only. Every setting is
+# commented so you can trim or extend freely. Re-runs whenever this file
+# changes (bump `defaults version` below to force a re-run after edits).
+#
+# defaults version: 1
+
+set -eu
+
+info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+
+info "Applying macOS defaults"
+
+# Close any open System Settings pane so it doesn't clobber our writes.
+osascript -e 'tell application "System Settings" to quit' 2>/dev/null || true
+
+# ---------------------------------------------------------------------------
+# Finder
+# ---------------------------------------------------------------------------
+defaults write NSGlobalDomain AppleShowAllExtensions -bool true          # show all file extensions
+defaults write com.apple.finder AppleShowAllFiles -bool true             # show hidden files
+defaults write com.apple.finder ShowPathbar -bool true                   # show path bar
+defaults write com.apple.finder ShowStatusBar -bool true                 # show status bar
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true       # full POSIX path in title
+defaults write com.apple.finder _FXSortFoldersFirst -bool true           # keep folders on top when sorting
+defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"      # default to list view
+defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"      # search the current folder by default
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true  # no .DS_Store on network shares
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true      # no .DS_Store on USB volumes
+
+# ---------------------------------------------------------------------------
+# Keyboard / text
+# ---------------------------------------------------------------------------
+defaults write NSGlobalDomain KeyRepeat -int 2                           # fast key repeat
+defaults write NSGlobalDomain InitialKeyRepeat -int 15                   # short delay until repeat
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false       # key repeat instead of accent popup
+
+# ---------------------------------------------------------------------------
+# Screenshots
+# ---------------------------------------------------------------------------
+mkdir -p "$HOME/Pictures/Screenshots"
+defaults write com.apple.screencapture location -string "$HOME/Pictures/Screenshots"  # save here
+defaults write com.apple.screencapture type -string "png"                # PNG format
+defaults write com.apple.screencapture disable-shadow -bool true         # no window drop-shadow
+
+# ---------------------------------------------------------------------------
+# Dock
+# ---------------------------------------------------------------------------
+defaults write com.apple.dock autohide -bool true                        # auto-hide the Dock
+defaults write com.apple.dock autohide-delay -float 0                    # no delay before it hides
+defaults write com.apple.dock autohide-time-modifier -float 0.4          # quicker hide animation
+defaults write com.apple.dock mru-spaces -bool false                     # don't auto-rearrange Spaces
+defaults write com.apple.dock show-recents -bool false                   # no recent apps in the Dock
+
+# ---------------------------------------------------------------------------
+# Trackpad
+# ---------------------------------------------------------------------------
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true  # tap to click
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true                   # tap to click (built-in)
+
+# ---------------------------------------------------------------------------
+# Panels / save behavior
+# ---------------------------------------------------------------------------
+defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode -bool true    # expanded save panel
+defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true       # expanded print panel
+defaults write NSGlobalDomain NSDocumentSaveNewDocumentsToCloud -bool false    # save to disk, not iCloud, by default
+
+# ---------------------------------------------------------------------------
+# Apply: restart affected apps (best-effort).
+# ---------------------------------------------------------------------------
+for app in Finder Dock SystemUIServer; do
+  killall "$app" >/dev/null 2>&1 || true
+done
+
+info "macOS defaults applied. Some changes may require a logout/restart."
+{{- end -}}

@@ -1,0 +1,98 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+#
+# macOS system-transfer helpers: Brewfile, fonts, wallpaper, defaults.
+# Included (optional) from the root Taskfile as the `mac:` namespace.
+# Every task refuses to run off macOS.
+
+version: "3"
+silent: true
+
+vars:
+  # Absolute path to the Brewfile in the chezmoi *source* tree.
+  BREWFILE_SRC:
+    sh: echo "$(chezmoi source-path 2>/dev/null)/dot_config/homebrew/Brewfile"
+  # Where the Brewfile lands once applied to $HOME.
+  BREWFILE_HOME: "{{.HOME}}/.config/homebrew/Brewfile"
+  WALLPAPER_SRC:
+    sh: echo "$(chezmoi source-path 2>/dev/null)/dot_config/wallpaper/current.png"
+  WALLPAPER_HOME: "{{.HOME}}/.config/wallpaper/current.png"
+
+tasks:
+  # Guard: bail out cleanly on non-macOS.
+  _guard:
+    internal: true
+    cmds:
+      - |
+        if [ "{{OS}}" != "darwin" ]; then
+          echo "This task only runs on macOS."; exit 1
+        fi
+
+  dump:
+    aliases: [brew:dump]
+    desc: "Regenerate the Brewfile from the live system into the chezmoi source"
+    cmds:
+      - task: _guard
+      - |
+        echo "==> Dumping installed formulae/casks/etc into:"
+        echo "    {{.BREWFILE_SRC}}"
+        brew bundle dump --force --file "{{.BREWFILE_SRC}}"
+        echo "==> Done. Review with 'git diff', then 'task save'."
+
+  bundle:
+    aliases: [brew:bundle]
+    desc: "Install everything in the Brewfile now (brew bundle)"
+    cmds:
+      - task: _guard
+      - |
+        file="{{.BREWFILE_HOME}}"
+        [ -f "$file" ] || file="{{.BREWFILE_SRC}}"
+        echo "==> brew bundle --file $file"
+        brew bundle --file "$file"
+
+  wallpaper:backup:
+    desc: "Capture the current desktop picture into the chezmoi source"
+    cmds:
+      - task: _guard
+      - |
+        cur="$(osascript -e 'tell application "System Events" to get picture of the first desktop' 2>/dev/null)"
+        if [ -z "$cur" ] || [ ! -f "$cur" ]; then
+          echo "Could not determine the current wallpaper path."; exit 1
+        fi
+        echo "==> Current wallpaper: $cur"
+        cp "$cur" "{{.WALLPAPER_SRC}}"
+        echo "==> Copied to {{.WALLPAPER_SRC}}"
+        echo "    Review with 'git diff', then 'task save'."
+
+  wallpaper:set:
+    desc: "Set the desktop wallpaper to the committed image now"
+    cmds:
+      - task: _guard
+      - |
+        img="{{.WALLPAPER_HOME}}"
+        [ -f "$img" ] || img="{{.WALLPAPER_SRC}}"
+        if ! command -v desktoppr >/dev/null 2>&1; then
+          echo "desktoppr not installed. Run 'task mac:bundle' first."; exit 1
+        fi
+        echo "==> desktoppr $img"
+        desktoppr "$img"
+
+  defaults:
+    aliases: [macos:defaults]
+    desc: "Apply the curated macOS defaults now (renders + runs the chezmoi script)"
+    cmds:
+      - task: _guard
+      - |
+        script="$(chezmoi source-path)/.chezmoiscripts/run_onchange_after_20-macos-defaults.sh.tmpl"
+        echo "==> Rendering and running $script"
+        chezmoi execute-template < "$script" | bash
+
+  backup-identity:
+    desc: "Back up keys/tokens/creds to an age-encrypted archive (use -- --list to preview)"
+    cmds:
+      - "{{.ROOT_DIR}}/backup-identity.sh {{.CLI_ARGS}}"
+
+  decommission:
+    desc: "Wipe your identity from this Mac (DRY RUN; add -- --execute to wipe)"
+    cmds:
+      - task: _guard
+      - "{{.ROOT_DIR}}/decommission.sh {{.CLI_ARGS}}"

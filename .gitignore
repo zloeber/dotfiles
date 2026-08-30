@@ -2,3 +2,4 @@
 .DS_Store
 .env
 secret_results.json
+./plans

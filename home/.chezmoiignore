@@ -1,0 +1,6 @@
+{{- /* macOS-only assets: never deposit them on Linux/containers. The scripts
+       under .chezmoiscripts self-gate on OS, this just skips the data files. */ -}}
+{{ if ne .chezmoi.os "darwin" }}
+.config/homebrew
+.config/wallpaper
+{{ end }}

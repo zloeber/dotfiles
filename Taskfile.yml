@@ -22,6 +22,9 @@ includes:
   github:
     taskfile: ./tasks/Taskfile.github.yml
     optional: true
+  mac:
+    taskfile: ./tasks/Taskfile.mac.yml
+    optional: true
 
 tasks:
   default:
