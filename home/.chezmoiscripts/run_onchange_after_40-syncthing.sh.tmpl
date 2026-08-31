@@ -1,0 +1,209 @@
+{{- if and (not .ephemeral) (not .headless) -}}
+#!/usr/bin/env bash
+#
+# Configure Syncthing declaratively from the spec in .chezmoidata/syncthing.json.
+# Cross-platform (macOS + Linux). Ensures Syncthing is running, then reconciles
+# the desired peer *devices* and shared *folders* into the local instance via its
+# REST API. Reconciliation is create-or-update and ADDITIVE — it never removes
+# devices/folders you added by hand.
+#
+# Idempotent and safe to re-run. Re-runs automatically whenever the spec changes,
+# because the spec's hash is embedded below. Run on demand with:
+#   task syncthing:apply
+#
+# Symmetric teardown lives in ../../decommission.sh (stops Syncthing gracefully
+# and reads folder paths from config.xml before wiping).
+#
+# spec hash: {{ .syncthing | toJson | sha256sum }}
+
+set -eu
+
+info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
+
+# The desired state, rendered from .chezmoidata/syncthing.json at apply time.
+SPEC='{{ .syncthing | toJson }}'
+
+# ---------------------------------------------------------------------------
+# 0. Put Homebrew (macOS) on PATH so brew-installed jq/curl/syncthing resolve
+#    even from a non-login shell.
+# ---------------------------------------------------------------------------
+if [ "$(uname -s)" = "Darwin" ]; then
+  for c in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [ -x "$c" ] && { eval "$("$c" shellenv)"; break; }
+  done
+fi
+
+# ---------------------------------------------------------------------------
+# 1. Dependencies + fast exit when there's nothing to do.
+# ---------------------------------------------------------------------------
+for bin in jq curl; do
+  command -v "$bin" >/dev/null 2>&1 || { warn "'$bin' not found; skipping Syncthing config."; exit 0; }
+done
+
+if [ "$(printf '%s' "$SPEC" | jq -r '((.devices // [])|length) + ((.folders // [])|length) + ((.options // {})|length)')" = "0" ]; then
+  info "Syncthing spec is empty — nothing to reconcile. Add devices/folders with: task syncthing:edit"
+  exit 0
+fi
+
+if ! command -v syncthing >/dev/null 2>&1; then
+  for c in /opt/homebrew/bin/syncthing /usr/local/bin/syncthing; do
+    [ -x "$c" ] && { PATH="$(dirname "$c"):$PATH"; break; }
+  done
+fi
+command -v syncthing >/dev/null 2>&1 || { warn "syncthing not installed; skipping (macOS: 'task mac:bundle')."; exit 0; }
+
+# ---------------------------------------------------------------------------
+# 2. Ensure the service is running.
+# ---------------------------------------------------------------------------
+if ! pgrep -x syncthing >/dev/null 2>&1; then
+  info "Starting Syncthing..."
+  case "$(uname -s)" in
+    Darwin)
+      command -v brew >/dev/null 2>&1 && brew services start syncthing >/dev/null 2>&1 || true
+      ;;
+    Linux)
+      if command -v systemctl >/dev/null 2>&1 && \
+         systemctl --user list-unit-files 2>/dev/null | grep -q '^syncthing\.service'; then
+        systemctl --user enable --now syncthing.service >/dev/null 2>&1 || true
+      fi
+      ;;
+  esac
+fi
+
+# ---------------------------------------------------------------------------
+# 3. Resolve the local GUI address + API key.
+# ---------------------------------------------------------------------------
+ADDR="$(syncthing cli config gui raw-address get 2>/dev/null | tr -d '[:space:]' || true)"
+[ -n "$ADDR" ] || ADDR="127.0.0.1:8384"
+ADDR="${ADDR/0.0.0.0/127.0.0.1}"   # wildcard bind -> talk to localhost
+ADDR="${ADDR/#:/127.0.0.1:}"       # ":8384" -> "127.0.0.1:8384"
+BASE="http://${ADDR}"
+
+# Wait for the REST API (unauthenticated health endpoint).
+ready=0
+for _ in $(seq 1 30); do
+  if curl -fsS -m 2 "${BASE}/rest/noauth/health" >/dev/null 2>&1; then ready=1; break; fi
+  sleep 1
+done
+if [ "$ready" -ne 1 ]; then
+  warn "Syncthing REST API not reachable at ${BASE}."
+  warn "Start it (macOS: 'brew services start syncthing'; Linux: 'systemctl --user start syncthing';"
+  warn "or run 'syncthing' once), then re-run: task syncthing:apply"
+  exit 0
+fi
+
+APIKEY="$(syncthing cli config gui apikey get 2>/dev/null | tr -d '[:space:]' || true)"
+if [ -z "$APIKEY" ]; then
+  # Fall back to parsing config.xml (same locations decommission.sh scans).
+  for c in \
+      "${STHOMEDIR:-}/config.xml" \
+      "$HOME/Library/Application Support/Syncthing/config.xml" \
+      "$HOME/.local/state/syncthing/config.xml" \
+      "$HOME/.config/syncthing/config.xml"; do
+    [ -n "$c" ] && [ -f "$c" ] || continue
+    if command -v xmllint >/dev/null 2>&1; then
+      APIKEY="$(xmllint --xpath 'string(//gui/apikey)' "$c" 2>/dev/null || true)"
+    else
+      APIKEY="$(sed -n 's:.*<apikey>\(.*\)</apikey>.*:\1:p' "$c" | head -n1)"
+    fi
+    [ -n "$APIKEY" ] && break
+  done
+fi
+[ -n "$APIKEY" ] || { warn "Could not determine Syncthing API key; skipping."; exit 0; }
+
+# ---------------------------------------------------------------------------
+# 4. REST helpers.
+# ---------------------------------------------------------------------------
+api() {  # METHOD PATH [JSON-BODY]
+  local method="$1" path="$2" data="${3:-}"
+  if [ -n "$data" ]; then
+    curl -fsS -m 15 -X "$method" \
+      -H "X-API-Key: ${APIKEY}" -H 'Content-Type: application/json' \
+      --data "$data" "${BASE}${path}"
+  else
+    curl -fsS -m 15 -X "$method" -H "X-API-Key: ${APIKEY}" "${BASE}${path}"
+  fi
+}
+# GET that tolerates 404 (item does not exist yet) — echoes body only on 200.
+api_get_opt() {
+  local path="$1" tmp code
+  tmp="$(mktemp)"
+  code="$(curl -sS -m 15 -o "$tmp" -w '%{http_code}' -H "X-API-Key: ${APIKEY}" "${BASE}${path}" 2>/dev/null || echo 000)"
+  [ "$code" = "200" ] && cat "$tmp"
+  rm -f "$tmp"
+}
+# Resolve a spec device name (or raw id) to its device ID.
+resolve_id() {
+  printf '%s' "$SPEC" | jq -r --arg k "$1" \
+    'first(.devices[]? | select(.name==$k or .id==$k) | .id) // $k'
+}
+
+MYID="$(api GET /rest/system/status | jq -r '.myID')"
+
+# ---------------------------------------------------------------------------
+# 5. Global options (deep-merged onto the current options).
+# ---------------------------------------------------------------------------
+SPEC_OPTS="$(printf '%s' "$SPEC" | jq -c '.options // {}')"
+if [ "$SPEC_OPTS" != "{}" ]; then
+  merged="$(api GET /rest/config/options | jq --argjson o "$SPEC_OPTS" '. * $o')"
+  api PUT /rest/config/options "$merged" >/dev/null
+  info "options: applied ${SPEC_OPTS}"
+fi
+
+# ---------------------------------------------------------------------------
+# 6. Devices (peers). PUT is create-or-replace; we merge onto defaults/existing.
+# ---------------------------------------------------------------------------
+while IFS= read -r dev; do
+  [ -n "$dev" ] || continue
+  id="$(printf '%s' "$dev" | jq -r '.id // empty')"
+  name="$(printf '%s' "$dev" | jq -r '.name // .id')"
+  [ -n "$id" ] || { warn "device with no id in spec; skipping"; continue; }
+  base="$(api_get_opt "/rest/config/devices/${id}")"
+  [ -n "$base" ] || base="$(api GET /rest/config/defaults/device)"
+  payload="$(printf '%s' "$base" | jq --arg id "$id" --arg name "$name" '.deviceID=$id | .name=$name')"
+  api PUT "/rest/config/devices/${id}" "$payload" >/dev/null
+  info "device: ${name} (${id%%-*}…)"
+done < <(printf '%s' "$SPEC" | jq -c '.devices[]? // empty')
+
+# ---------------------------------------------------------------------------
+# 7. Folders. Always shared with this machine plus each resolved peer.
+# ---------------------------------------------------------------------------
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  fid="$(printf '%s' "$f" | jq -r '.id // empty')"
+  label="$(printf '%s' "$f" | jq -r '.label // .id')"
+  fpath="$(printf '%s' "$f" | jq -r '.path // empty')"
+  ftype="$(printf '%s' "$f" | jq -r '.type // "sendreceive"')"
+  [ -n "$fid" ]   || { warn "folder with no id in spec; skipping"; continue; }
+  [ -n "$fpath" ] || { warn "folder '${fid}' has no path; skipping"; continue; }
+  case "$fpath" in
+    "~")   fpath="$HOME" ;;
+    "~/"*) fpath="$HOME/${fpath#\~/}" ;;
+  esac
+
+  dev_json="$(jq -n --arg my "$MYID" '[{deviceID:$my}]')"
+  while IFS= read -r nm; do
+    [ -n "$nm" ] || continue
+    did="$(resolve_id "$nm")"
+    dev_json="$(printf '%s' "$dev_json" | jq --arg d "$did" '(. + [{deviceID:$d}]) | unique_by(.deviceID)')"
+  done < <(printf '%s' "$f" | jq -r '.devices[]? // empty')
+
+  base="$(api_get_opt "/rest/config/folders/${fid}")"
+  [ -n "$base" ] || base="$(api GET /rest/config/defaults/folder)"
+  payload="$(printf '%s' "$base" | jq \
+    --arg id "$fid" --arg label "$label" --arg path "$fpath" --arg type "$ftype" --argjson devs "$dev_json" \
+    '.id=$id | .label=$label | .path=$path | .type=$type | .devices=$devs')"
+  api PUT "/rest/config/folders/${fid}" "$payload" >/dev/null
+  mkdir -p "$fpath" 2>/dev/null || true   # so Syncthing doesn't flag a missing path
+  info "folder: ${label} -> ${fpath} [${ftype}]"
+done < <(printf '%s' "$SPEC" | jq -c '.folders[]? // empty')
+
+# ---------------------------------------------------------------------------
+# 8. Summary.
+# ---------------------------------------------------------------------------
+info "Syncthing configured."
+printf '    This device ID: %s\n' "$MYID"
+printf '    Web UI:         %s\n' "$BASE"
+info "Share the ID above with peers so they can add this machine."
+{{- end -}}

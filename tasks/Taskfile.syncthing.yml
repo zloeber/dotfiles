@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+#
+# Syncthing helpers (cross-platform). Included from the root Taskfile as the
+# `syncthing:` namespace. The declarative spec lives in the chezmoi source at
+# .chezmoidata/syncthing.json and is reconciled on `chezmoi apply` by
+# .chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl.
+
+version: "3"
+silent: true
+
+vars:
+  SPEC_SRC:
+    sh: echo "$(chezmoi source-path 2>/dev/null)/.chezmoidata/syncthing.json"
+  SCRIPT_SRC:
+    sh: echo "$(chezmoi source-path 2>/dev/null)/.chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl"
+
+tasks:
+  apply:
+    desc: "Reconcile Syncthing devices/folders from the spec now (renders + runs the chezmoi script)"
+    cmds:
+      - chezmoi execute-template < "{{.SCRIPT_SRC}}" | bash
+
+  edit:
+    desc: "Edit the declarative Syncthing spec (.chezmoidata/syncthing.json)"
+    cmds:
+      - ${EDITOR:-vi} "{{.SPEC_SRC}}"
+
+  id:
+    desc: "Print THIS machine's Syncthing device ID (share it with peers)"
+    cmds:
+      - |
+        if command -v syncthing >/dev/null 2>&1; then
+          syncthing --device-id
+        else
+          echo "syncthing not installed."; exit 1
+        fi
+
+  gui:
+    desc: "Open the Syncthing web UI"
+    cmds:
+      - |
+        if [ "{{OS}}" = "darwin" ]; then
+          open http://127.0.0.1:8384
+        else
+          xdg-open http://127.0.0.1:8384
+        fi

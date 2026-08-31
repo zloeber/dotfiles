@@ -11,3 +11,4 @@ task = "latest"      # go-task, runs this repo's Taskfile
 # Convenience tools referenced by the dotfiles / Taskfile.
 starship = "latest"  # prompt used by dot_zshrc
 gitleaks = "latest"  # used by `task secret:search`
+jq = "latest"        # JSON wrangling for the Syncthing reconcile script

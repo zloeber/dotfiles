@@ -175,6 +175,49 @@ checklist at the end for the steps it deliberately won't automate — revoking
 tokens server-side, signing out of Apple ID / Find My, and the final "Erase All
 Content and Settings". See `./decommission.sh --help`.
 
+## Syncthing (declarative device/folder sync)
+
+Syncthing is configured **declaratively** from a committed spec — the setup-side
+counterpart to what `decommission.sh` tears down. The spec lives in the chezmoi
+source at `home/.chezmoidata/syncthing.json`:
+
+```json
+{
+  "syncthing": {
+    "options": { "urAccepted": -1 },
+    "devices": [
+      { "name": "laptop", "id": "AIR6LPZ-7K4PTTV-…" }
+    ],
+    "folders": [
+      { "id": "notes", "label": "Notes", "path": "~/Sync/notes",
+        "type": "sendreceive", "devices": ["laptop"] }
+    ]
+  }
+}
+```
+
+On `chezmoi apply`, `home/.chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl`
+ensures Syncthing is running (cross-platform: `brew services` on macOS,
+`systemctl --user` on Linux) and reconciles the spec into the local instance via
+its REST API. It's **idempotent and additive** — it creates/updates the listed
+devices and folders but never removes anything you added by hand — and re-runs
+automatically whenever the spec changes (its hash is embedded in the script). It
+skips cleanly (no-op + warning) in ephemeral/headless environments, when
+Syncthing/`jq`/`curl` aren't installed, or when the API isn't reachable.
+
+> Device IDs are **public** (you hand them to peers to pair), so committing them
+> is safe. The REST API key is read from the running instance at apply time and
+> is never stored in the repo. `folders[].devices` entries may be a device
+> `name` from the spec or a raw device ID; this machine is always added to each
+> folder automatically.
+
+| Command | What it does |
+| --- | --- |
+| `task syncthing:edit` | Edit the spec (`.chezmoidata/syncthing.json`) |
+| `task syncthing:apply` | Reconcile devices/folders from the spec right now |
+| `task syncthing:id` | Print this machine's device ID (share it with peers) |
+| `task syncthing:gui` | Open the Syncthing web UI |
+
 ## Cross-platform notes
 
 - **Tooling** is provided by mise, so the same versions are used on macOS and
@@ -199,11 +242,13 @@ Content and Settings". See `./decommission.sh --help`.
 ├── Taskfile.yml                 # dotfiles management commands (task -l)
 ├── tasks/Taskfile.github.yml    # optional GitHub helper tasks
 ├── tasks/Taskfile.mac.yml       # optional macOS helpers (brew/wallpaper/defaults)
+├── tasks/Taskfile.syncthing.yml # optional Syncthing helpers (apply/edit/id/gui)
 ├── .chezmoiroot                 # points chezmoi at ./home
 └── home/                        # the actual dotfiles (chezmoi source root)
     ├── .chezmoi.toml.tmpl       # generates ~/.config/chezmoi/chezmoi.toml
     ├── .chezmoiignore           # skips macOS-only assets off macOS
-    ├── .chezmoiscripts/         # run_onchange scripts (macOS: brew, defaults, wallpaper)
+    ├── .chezmoidata/            # template data (e.g. syncthing.json — the Syncthing spec)
+    ├── .chezmoiscripts/         # run_onchange scripts (brew, defaults, wallpaper, syncthing)
     ├── dot_zshrc, dot_gitconfig.tmpl, …
     ├── dot_config/…             # ~/.config/* (mise, starship, waveterm, uv, homebrew, wallpaper, …)
     ├── private_dot_ssh/…        # ~/.ssh (public keys + encrypted private keys)

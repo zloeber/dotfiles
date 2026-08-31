@@ -25,6 +25,9 @@ includes:
   mac:
     taskfile: ./tasks/Taskfile.mac.yml
     optional: true
+  syncthing:
+    taskfile: ./tasks/Taskfile.syncthing.yml
+    optional: true
 
 tasks:
   default:

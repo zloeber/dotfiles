@@ -51,6 +51,8 @@ brew "libtool"
 brew "graphviz"
 # Tools and libraries to manipulate images in select formats
 brew "imagemagick"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
 # Easily check your clusters for use of deprecated APIs
 brew "kubent"
 # Linux virtual machines

@@ -1,0 +1,28 @@
+{
+  "syncthing": {
+    "options": {},
+    "devices": [],
+    "folders": [],
+
+    "_help": "Declarative Syncthing config. Reconciled on 'chezmoi apply' by .chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl (or on demand via 'task syncthing:apply'). Copy entries from '_examples' into 'devices'/'folders'/'options' to activate them. Reconciliation is additive: it creates/updates the listed items but never removes devices/folders you added by hand. Device IDs are PUBLIC (safe to commit) — get yours with 'task syncthing:id'. The REST API key is read from the local instance at runtime and is NOT stored here. Edit with: task syncthing:edit",
+
+    "_examples": {
+      "options": {
+        "urAccepted": -1,
+        "natEnabled": true
+      },
+      "devices": [
+        { "name": "laptop", "id": "AIR6LPZ-7K4PTTV-UDQGDYB-L6WA7XX-PLACEHOLDER-DEVICE-ID-GOES-HERE-XXXXXXX" }
+      ],
+      "folders": [
+        {
+          "id": "notes",
+          "label": "Notes",
+          "path": "~/Sync/notes",
+          "type": "sendreceive",
+          "devices": ["laptop"]
+        }
+      ]
+    }
+  }
+}
