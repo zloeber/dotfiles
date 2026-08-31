@@ -154,6 +154,19 @@ tasks:
       - gitleaks detect --source ./ -f json -r secret_results.json
 
   # ---------------------------------------------------------------------
+  # Portable identity bundle (USB transfer to a new machine)
+  # ---------------------------------------------------------------------
+  identity:list:
+    desc: "Preview what identity:bundle would copy (no writes)"
+    cmds:
+      - ./bundle-identity.sh --list
+
+  identity:bundle:
+    desc: "Bundle age key + ~/.ssh + home *token*.* into ./identity-bundle (add -- --passphrase to encrypt; restore with ./install.sh)"
+    cmds:
+      - ./bundle-identity.sh {{.CLI_ARGS}}
+
+  # ---------------------------------------------------------------------
   # Housekeeping
   # ---------------------------------------------------------------------
   show:
@@ -173,3 +186,11 @@ tasks:
     cmds:
       - find . -type f -name ".DS_Store" -delete
       - rm -f secret_results.json
+
+  install:hermes:
+    desc: Install the hermes agent
+    cmds:
+      - |
+        curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+        source ~/.zshrc
+        hermes setup

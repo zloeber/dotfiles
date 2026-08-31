@@ -113,3 +113,31 @@ into `$HOME`:
   *and* a typed confirmation. Stops Syncthing via its REST API and reads synced
   folder paths from `config.xml` before deleting it; refuses `/`, `$HOME`, or
   non-absolute paths as a guard. Keep these safety invariants when editing.
+
+A second, lighter pair handles **physical (USB) transport of just the bootstrap
+crown jewels** — the minimal secrets a fresh box needs before `chezmoi apply` can
+decrypt anything:
+- `bundle-identity.sh` (`task identity:bundle`, preview with `task identity:list`)
+  — copies `~/.config/chezmoi/key.txt` (the age identity, which carries both the
+  private key and its public recipient), all of `~/.ssh` (live agent sockets
+  skipped), and home-root `*token*.*` files into `identity-bundle/` at the repo
+  root. **Plaintext by default**; `--passphrase` (alias `--encrypt`) instead
+  stages the tree, `tar | age -p`s it into a single `bundle.tar.age`, and scrubs
+  the plaintext (an EXIT trap scrubs the staging on failure too) — only
+  `MANIFEST.txt` stays plaintext. The folder is git-ignored (`/identity-bundle/`
+  in `.gitignore`) and the script refuses to write into a git-tracked path; its
+  gitignore-coverage check probes a path *under* the dir because a trailing-slash
+  pattern won't match a not-yet-created directory.
+- `install.sh` — the restore/new-machine side. Idempotent (skips existing files
+  unless `--force`). It resolves a `SRC` dir — the plaintext `identity-bundle/`,
+  or a `mktemp -d` it decrypts `bundle.tar.age` into (via `age`, prompting for the
+  passphrase; the temp dir is scrubbed immediately after and via an EXIT trap).
+  **Only the age key is auto-restored** — it's all that's needed to bootstrap
+  chezmoi, and real SSH keys are meant to live age-encrypted *in* chezmoi. The
+  bundled `~/.ssh` and tokens are a just-in-case safety net, restored only with
+  `--with-ssh` / `--with-tokens` / `--all` (perms fixed on restore — keys `600`,
+  `.ssh` `700`, `.pub` `644`). Then it runs `configure.sh` and
+  `chezmoi init --apply --source <repo>`. Other flags: `--restore-only`,
+  `--no-apply`, `--bundle DIR`, `--force`. For an encrypted bundle on a fresh box,
+  `age` may not exist yet, so `install.sh` pulls `configure.sh` forward (guarded
+  by a `TOOLS_DONE` flag so it runs at most once) to get `age` before decrypting.

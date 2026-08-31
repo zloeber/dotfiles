@@ -3,3 +3,7 @@
 .env
 secret_results.json
 ./plans
+
+# Portable identity bundle — PLAINTEXT secrets (age key, ~/.ssh, tokens).
+# Created by ./bundle-identity.sh, restored by ./install.sh. Never commit it.
+/identity-bundle/
