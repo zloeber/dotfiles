@@ -79,8 +79,8 @@ brew "ruby-build"
 brew "skopeo"
 # Prettier way to inspect network connections
 brew "snitch"
-# Open source continuous file synchronization application
-brew "syncthing", restart_service: :changed
+# NOTE: Syncthing is intentionally NOT installed here. It is set up out of band
+# (not during `chezmoi apply`) by ../../syncthing-setup.sh / `task syncthing:apply`.
 # MCP server for Terraform
 brew "terraform-mcp-server"
 # Terminal multiplexer

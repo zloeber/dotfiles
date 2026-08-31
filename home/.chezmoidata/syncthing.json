@@ -4,7 +4,7 @@
     "devices": [],
     "folders": [],
 
-    "_help": "Declarative Syncthing config. Reconciled on 'chezmoi apply' by .chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl (or on demand via 'task syncthing:apply'). Copy entries from '_examples' into 'devices'/'folders'/'options' to activate them. Reconciliation is additive: it creates/updates the listed items but never removes devices/folders you added by hand. Device IDs are PUBLIC (safe to commit) — get yours with 'task syncthing:id'. The REST API key is read from the local instance at runtime and is NOT stored here. Edit with: task syncthing:edit",
+    "_help": "Declarative Syncthing config. Reconciled OUT OF BAND (not by 'chezmoi apply') via ../../syncthing-setup.sh, i.e. 'task syncthing:apply'. Copy entries from '_examples' into 'devices'/'folders'/'options' to activate them. Reconciliation is additive: it creates/updates the listed items but never removes devices/folders you added by hand. Device IDs are PUBLIC (safe to commit) — get yours with 'task syncthing:id'. The REST API key is read from the local instance at runtime and is NOT stored here. Edit with: task syncthing:edit",
 
     "_examples": {
       "options": {

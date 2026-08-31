@@ -2,23 +2,28 @@
 #
 # Syncthing helpers (cross-platform). Included from the root Taskfile as the
 # `syncthing:` namespace. The declarative spec lives in the chezmoi source at
-# .chezmoidata/syncthing.json and is reconciled on `chezmoi apply` by
-# .chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl.
+# .chezmoidata/syncthing.json and is reconciled by the standalone, out-of-band
+# ../syncthing-setup.sh (NOT by `chezmoi apply`).
 
 version: "3"
 silent: true
 
 vars:
+  SETUP:
+    sh: echo "{{.ROOT_DIR}}/syncthing-setup.sh"
   SPEC_SRC:
     sh: echo "$(chezmoi source-path 2>/dev/null)/.chezmoidata/syncthing.json"
-  SCRIPT_SRC:
-    sh: echo "$(chezmoi source-path 2>/dev/null)/.chezmoiscripts/run_onchange_after_40-syncthing.sh.tmpl"
 
 tasks:
-  apply:
-    desc: "Reconcile Syncthing devices/folders from the spec now (renders + runs the chezmoi script)"
+  install:
+    desc: "Install the Syncthing binary (cross-platform), without touching config"
     cmds:
-      - chezmoi execute-template < "{{.SCRIPT_SRC}}" | bash
+      - "{{.SETUP}} --install-only"
+
+  apply:
+    desc: "Install (if needed) + start Syncthing, then reconcile devices/folders from the spec"
+    cmds:
+      - "{{.SETUP}}"
 
   edit:
     desc: "Edit the declarative Syncthing spec (.chezmoidata/syncthing.json)"
@@ -32,7 +37,7 @@ tasks:
         if command -v syncthing >/dev/null 2>&1; then
           syncthing --device-id
         else
-          echo "syncthing not installed."; exit 1
+          echo "syncthing not installed. Run: task syncthing:install"; exit 1
         fi
 
   gui:

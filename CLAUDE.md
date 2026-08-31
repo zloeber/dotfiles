@@ -34,9 +34,11 @@ Filenames encode attributes — renaming changes behavior:
   prefixes (`10-`, `20-`, `30-`, `40-`) order execution; `before`/`after` sets phase.
 - `.chezmoiremove` lists target paths chezmoi deletes on apply (e.g. legacy `.p10k.zsh`).
 - `.chezmoidata/*.json|yaml|toml` are **template data, not targets** — their
-  top-level keys merge into the template root (so `.chezmoidata/syncthing.json`
-  containing `{"syncthing": {...}}` exposes `.syncthing` to every template). This
-  is how the Syncthing spec is carried without depositing a file in `$HOME`.
+  top-level keys merge into the template root. `.chezmoidata/syncthing.json`
+  (`{"syncthing": {...}}`) is kept here so it lives in the source tree without
+  being deposited in `$HOME`; it is the Syncthing spec, read directly (via `jq`)
+  by the out-of-band `syncthing-setup.sh` — **not** consumed by any template or
+  `chezmoi apply` step (see the Syncthing section below).
 
 ## Templating & environment detection
 
@@ -94,15 +96,28 @@ These three are darwin-gated and re-run only when their content changes. macOS
 data files (`.config/homebrew`, `.config/wallpaper`) are ignored off darwin via
 `home/.chezmoiignore`. Refresh the Brewfile with `task mac:dump`.
 
-`40-syncthing` is the odd one out — **cross-platform, not darwin-gated** (only
-skipped when `.ephemeral`/`.headless`). It reconciles the declarative spec in
-`home/.chezmoidata/syncthing.json` into the local Syncthing via its REST API
-(`brew services`/`systemctl --user` to start it; `jq` builds the payloads). It is
-idempotent and **additive** — it PUTs the listed devices/folders but never prunes
-items added by hand — and is the setup-side mirror of `decommission.sh`'s
-teardown. Depends on `jq` + `curl`; it no-ops with a warning if either is missing,
-if Syncthing isn't installed/running, or if the API is unreachable. Run on demand
-with `task syncthing:apply`; edit the spec with `task syncthing:edit`.
+## Syncthing (out of band — not part of `chezmoi apply`)
+
+Syncthing setup is deliberately **decoupled from the idempotent install**: neither
+`chezmoi apply`, `configure.sh`, nor `install.sh` installs or reconfigures it, so
+bootstrapping a machine never silently touches file-sync. (It used to run as
+`run_onchange_after_40-syncthing.sh.tmpl`; that script is gone, and `syncthing`
+was removed from the Brewfile.) Everything now lives in the repo-root, cross-platform
+`syncthing-setup.sh` (`syncthing:` namespace tasks wrap it):
+- **Install** — if `syncthing` is already on PATH (e.g. a prior `brew install`),
+  it's used as-is; otherwise the official release binary for this OS/arch is
+  downloaded from GitHub into `~/.local/bin` (no root, any distro). `task
+  syncthing:install` / `--install-only` does just this.
+- **Start** — a Homebrew service (macOS) or `systemctl --user` unit (Linux) if one
+  exists, else a direct background `syncthing serve` launch as a universal fallback.
+- **Configure** — reads the spec's `.syncthing` object from
+  `home/.chezmoidata/syncthing.json` **directly with `jq`** (no chezmoi
+  templating), then reconciles devices/folders/options via the REST API. Still
+  idempotent and **additive** (PUTs listed items, never prunes hand-added ones),
+  and still the setup-side mirror of `decommission.sh`'s teardown. Depends on
+  `jq` + `curl`; no-ops with a warning if a dep is missing or the API is
+  unreachable. Run with `task syncthing:apply`; edit the spec with
+  `task syncthing:edit`; flags `--no-install` (reconcile only) / `--install-only`.
 
 Two repo-root scripts form a **back-up-first, wipe-second** pair, never deployed
 into `$HOME`:
